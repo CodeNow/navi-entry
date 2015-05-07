@@ -1,0 +1,31 @@
+{
+  "name": "navi-entry",
+  "version": "1.0.0",
+  "description": "A redis list class for a navi entry",
+  "main": "index.js",
+  "scripts": {
+    "test": "lab -t 100"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/CodeNow/navi-entry.git"
+  },
+  "author": "",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/CodeNow/navi-entry/issues"
+  },
+  "homepage": "https://github.com/CodeNow/navi-entry#readme",
+  "dependencies": {
+    "101": "^0.16.1",
+    "error-cat": "^1.1.1",
+    "keypather": "^1.10.1",
+    "redis-types": "^0.2.3"
+  },
+  "devDependencies": {
+    "code": "^1.4.0",
+    "lab": "^5.8.0",
+    "redis": "^0.12.1",
+    "sinon": "^1.14.1"
+  }
+}
