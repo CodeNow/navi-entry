@@ -9,6 +9,7 @@ var beforeEach = lab.beforeEach;
 var afterEach = lab.afterEach;
 var sinon = require('sinon');
 
+var noop = require('101/noop');
 var redis = require('redis');
 var redisTypes = require('redis-types');
 
@@ -38,6 +39,7 @@ describe('NaviEntry instance methods', function () {
     });
 
     describe('setBackend', function () {
+
       it('should create the redis list entry and set name and backend', function (done) {
         var instanceName = 'instanceName';
         var opts = {
@@ -65,10 +67,31 @@ describe('NaviEntry instance methods', function () {
           });
         });
       });
+
+      describe('errors', function () {
+
+        it('should callback error if getInstanceName errors', function (done) {
+          var opts = {
+            containerPort: '80',
+            branch:       'branch',
+            ownerUsername: 'ownerUsername',
+            userContentDomain: 'runnableapp.com',
+            instance: {
+              masterPod: true,
+              name: 'instanceName'
+            }
+          };
+          var host = NaviEntry.createHostname(opts);
+          var naviEntry = NaviEntry.createFromHost(host);
+          var backendUrl = 'http://10.0.0.1:4000';
+          expect(naviEntry.setBackend.bind(naviEntry, backendUrl, noop))
+            .to.throw();
+          done();
+        });
+      });
     });
 
     describe('findInstanceNameForHostname', function () {
-
       beforeEach(function (done) {
         var opts = ctx.opts = {
           containerPort: '80',
@@ -107,8 +130,12 @@ describe('NaviEntry instance methods', function () {
       describe('redis client error', function() {
         beforeEach(function (done) {
           ctx.err = new Error('boom');
-          sinon.stub(redisTypes.Key.prototype.redisClient, 'keys')
+          ctx.keysStub = sinon.stub(redisTypes.Key.prototype.redisClient, 'keys')
             .yieldsAsync(ctx.err);
+          done();
+        });
+        afterEach(function (done) {
+          ctx.keysStub.restore();
           done();
         });
 
@@ -131,6 +158,64 @@ describe('NaviEntry instance methods', function () {
             expect(err.message).to.match(/hostname not found/);
             done();
           });
+        });
+      });
+    });
+
+    describe('getInstanceName', function () {
+
+      it('get the instance name', function (done) {
+        var opts = {
+          containerPort: '80',
+          branch:       'branch',
+          instanceName: 'instanceName',
+          ownerUsername: 'ownerUsername',
+          userContentDomain: 'runnableapp.com'
+        };
+        var naviEntry = new NaviEntry(opts);
+        var backendUrl = 'http://10.0.0.1:4000';
+        naviEntry.setBackend(backendUrl, function (err) {
+          if (err) { return done(err); }
+          naviEntry.getInstanceName(function (err, name) {
+            if (err) { return done(err); }
+            expect(name).to.equal(opts.instanceName);
+            done();
+          });
+        });
+      });
+    });
+
+    describe('create naviEntry', function () {
+      beforeEach(function (done) {
+        var opts = ctx.opts = {
+          containerPort: '80',
+          branch:       'branch',
+          instanceName: 'instanceName',
+          ownerUsername: 'ownerUsername',
+          userContentDomain: 'runnableapp.com'
+        };
+        var naviEntry = ctx.naviEntry = new NaviEntry(opts);
+        var backendUrl = 'http://10.0.0.1:4000';
+        naviEntry.setBackend(backendUrl, done);
+      });
+
+      describe('getElasticHostname', function () {
+
+        it('get the instance name', function (done) {
+          ctx.naviEntry.getInstanceName(function (err, name) {
+            if (err) { return done(err); }
+            expect(name).to.equal(ctx.opts.instanceName);
+            done();
+          });
+        });
+      });
+
+      describe('getElasticHostname', function () {
+
+        it('should do remove the branch from the hostname', function (done) {
+          var hostname = ctx.naviEntry.getElasticHostname(ctx.opts.branch);
+          expect(hostname).to.equal('instancename-staging-ownerusername.runnableapp.com');
+          done();
         });
       });
     });

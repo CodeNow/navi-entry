@@ -63,15 +63,16 @@ function NaviEntry (optsOrKey) {
   }
 
   if (opts) {
+    this.opts = opts;
     formatOpts(opts);
     requireOpt(opts, 'containerPort');
 
-    var containerPort     = this.containerPort     = opts.containerPort;
-    var instanceName      = this.instanceName      = opts.instanceName;
-    var branch            = this.branch            = opts.branch;
-    var masterPod         = this.masterPod         = opts.masterPod;
-    var ownerUsername     = this.ownerUsername     = opts.ownerUsername;
-    var userContentDomain = this.userContentDomain = opts.userContentDomain;
+    var containerPort     = opts.containerPort;
+    var instanceName      = opts.instanceName;
+    var branch            = opts.branch;
+    var masterPod         = opts.masterPod;
+    var ownerUsername     = opts.ownerUsername;
+    var userContentDomain = opts.userContentDomain;
 
     containerPort = containerPort.split('/')[0];
     // the new user domain is active. use the new domain scheme
@@ -90,6 +91,9 @@ function NaviEntry (optsOrKey) {
       ].join('').toLowerCase();
     }
   }
+  else {
+    this.opts = {};
+  }
 
   RedisList.call(this, key);
 }
@@ -102,7 +106,16 @@ require('util').inherits(NaviEntry, RedisList);
  * @return {NaviEntry}    naviEntry
  */
 NaviEntry.createFromHost = function (host) {
-  var parsed = url.parse('http://'+host);
+  return this.createFromUrl('http://'+host);
+};
+
+/**
+ * create a NaviEntry instance from uri
+ * @param  {String} uri   uri of an instance container
+ * @return {NaviEntry}    naviEntry
+ */
+NaviEntry.createFromUrl = function (uri) {
+  var parsed = url.parse(uri);
   parsed.port = parsed.port || '80';
   var key = [
     'frontend:',
@@ -163,9 +176,36 @@ NaviEntry.findInstanceNameForHostname = function (hostname, cb) {
  * @param {String} backendUrl should be a full url including protocol and port, ex: http://10.0.1.1:80
  */
 NaviEntry.prototype.setBackend = function (backendUrl, cb) {
+  if (!this.opts.instanceName) {
+    throw new Error('opts.instanceName is required');
+  }
   this.redisClient.multi()
     .del(this.key)
-    .rpush(this.key, this.instanceName)
+    .rpush(this.key, this.opts.instanceName)
     .rpush(this.key, backendUrl)
     .exec(cb);
+};
+
+/**
+ * get the instance name from the navi entry list
+ * @param  {getInstanceNameCb} cb
+ */
+/**
+ * @callback getInstanceNameCb
+ * @param {Error}  err
+ * @param {String} instanceName instance name in redis
+ */
+NaviEntry.prototype.getInstanceName = function (cb) {
+  var self = this;
+  return this.lindex(0, cb);
+};
+
+/**
+ * get the elastic url associated with the naviEntry
+ * @param   {String} branch  branch that instance is for
+ * @return  {String} elasticHostname
+ */
+NaviEntry.prototype.getElasticHostname = function (branch, cb) {
+  var re = new RegExp('^frontend:[0-9]+[.]'+branch+'-');
+  return this.key.replace(re, '');
 };

@@ -100,11 +100,11 @@ describe('NaviEntry', function () {
           opts.branch, '-', opts.instanceName, '-staging-', opts.ownerUsername, '.',
           opts.userContentDomain
         ].join('').toLowerCase());
-      expect(naviEntry.containerPort).to.equal(opts.containerPort);
-      expect(naviEntry.instanceName).to.equal(opts.instanceName);
-      expect(naviEntry.branch).to.equal(opts.branch);
-      expect(naviEntry.ownerUsername).to.equal(opts.ownerUsername);
-      expect(naviEntry.userContentDomain).to.equal(opts.userContentDomain);
+      expect(naviEntry.opts.containerPort).to.equal(opts.containerPort);
+      expect(naviEntry.opts.instanceName).to.equal(opts.instanceName);
+      expect(naviEntry.opts.branch).to.equal(opts.branch);
+      expect(naviEntry.opts.ownerUsername).to.equal(opts.ownerUsername);
+      expect(naviEntry.opts.userContentDomain).to.equal(opts.userContentDomain);
 
       done();
     });
@@ -137,11 +137,11 @@ describe('NaviEntry', function () {
           opts.instance.name, '-staging-', opts.ownerUsername, '.',
           opts.userContentDomain
         ].join('').toLowerCase());
-      expect(naviEntry.containerPort).to.equal(opts.containerPort);
-      expect(naviEntry.instanceName).to.equal(opts.instanceName);
-      expect(naviEntry.branch).to.equal(opts.branch);
-      expect(naviEntry.ownerUsername).to.equal(opts.ownerUsername);
-      expect(naviEntry.userContentDomain).to.equal(opts.userContentDomain);
+      expect(naviEntry.opts.containerPort).to.equal(opts.containerPort);
+      expect(naviEntry.opts.instanceName).to.equal(opts.instanceName);
+      expect(naviEntry.opts.branch).to.equal(opts.branch);
+      expect(naviEntry.opts.ownerUsername).to.equal(opts.ownerUsername);
+      expect(naviEntry.opts.userContentDomain).to.equal(opts.userContentDomain);
 
       done();
     });
