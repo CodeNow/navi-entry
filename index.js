@@ -1,6 +1,6 @@
 'use strict';
 
-var url = require('url')
+var url = require('url');
 var redisTypes = require('redis-types');
 var RedisList  = redisTypes.List;
 var ErrorCat = require('error-cat');
