@@ -190,8 +190,8 @@ NaviEntry.prototype.setBackend = function (backendUrl, instanceName, masterPod, 
   if (!instanceName) {
     throw new Error('instanceName or opts.instanceName is required');
   }
-  masterPod = masterPod || this.opts.masterPod;
-  if (!masterPod) {
+  masterPod = exists(masterPod) ? masterPod : this.opts.masterPod;
+  if (!exists(masterPod)) {
     throw new Error('masterPod or opts.masterPod is required');
   }
   var task = this.redisClient.multi();
