@@ -48,17 +48,17 @@ describe('NaviEntry', function () {
         var expectedErrMessage = 'missing arguments';
         expect(
           createNaviEntry.bind(null, {
-            containerPort: '80'})
+            exposedPort: '80'})
         ).to.throw();
         expect(
           createNaviEntry.bind(null, {
-            containerPort: '80',
+            exposedPort: '80',
             instanceName: 'instanceName'
           })
         ).to.throw();
         expect(
           createNaviEntry.bind(null, {
-            containerPort: '80',
+            exposedPort: '80',
             instanceName: 'instanceName',
             ownerUsername: 'ownerUsername'
           })
@@ -70,7 +70,7 @@ describe('NaviEntry', function () {
       it('should error if redisClient is not provided', function (done) {
         expect(
           createNaviEntry.bind(null, {
-            containerPort: '80',
+            exposedPort: '80',
             branch:       'branch',
             instanceName: 'instanceName',
             ownerUsername: 'ownerUsername',
@@ -85,7 +85,7 @@ describe('NaviEntry', function () {
     it('should create an NaviEntry instance', function (done) {
       NaviEntry.setRedisClient(redis.createClient());
       var opts = {
-        containerPort: '80',
+        exposedPort: '80',
         branch:       'branch',
         instanceName: 'instanceName',
         ownerUsername: 'ownerUsername',
@@ -96,11 +96,11 @@ describe('NaviEntry', function () {
       expect(naviEntry.key)
         .to.equal([
           'frontend:',
-          opts.containerPort, '.',
+          opts.exposedPort, '.',
           opts.branch, '-', opts.instanceName, '-staging-', opts.ownerUsername, '.',
           opts.userContentDomain
         ].join('').toLowerCase());
-      expect(naviEntry.opts.containerPort).to.equal(opts.containerPort);
+      expect(naviEntry.opts.exposedPort).to.equal(opts.exposedPort);
       expect(naviEntry.opts.instanceName).to.equal(opts.instanceName);
       expect(naviEntry.opts.branch).to.equal(opts.branch);
       expect(naviEntry.opts.ownerUsername).to.equal(opts.ownerUsername);
@@ -112,7 +112,7 @@ describe('NaviEntry', function () {
     it('should create an NaviEntry instance for a masterPod instance', function(done) {
       NaviEntry.setRedisClient(redis.createClient());
       var opts = {
-        containerPort: '80',
+        exposedPort: '80',
         branch:       'branch',
         ownerUsername: 'ownerUsername',
         userContentDomain: 'runnableapp.com',
@@ -126,18 +126,18 @@ describe('NaviEntry', function () {
       expect(naviEntry.key)
         .to.equal([
           'frontend:',
-          opts.containerPort, '.',
+          opts.exposedPort, '.',
           opts.branch, '-', opts.instance.name, '-staging-', opts.ownerUsername, '.',
           opts.userContentDomain
         ].join('').toLowerCase());
       expect(naviEntry.elasticKey)
         .to.equal([
           'frontend:',
-          opts.containerPort, '.',
+          opts.exposedPort, '.',
           opts.instance.name, '-staging-', opts.ownerUsername, '.',
           opts.userContentDomain
         ].join('').toLowerCase());
-      expect(naviEntry.opts.containerPort).to.equal(opts.containerPort);
+      expect(naviEntry.opts.exposedPort).to.equal(opts.exposedPort);
       expect(naviEntry.opts.instanceName).to.equal(opts.instanceName);
       expect(naviEntry.opts.branch).to.equal(opts.branch);
       expect(naviEntry.opts.ownerUsername).to.equal(opts.ownerUsername);
@@ -151,7 +151,7 @@ describe('NaviEntry', function () {
     it('should create a naviEntry from hostname', function (done) {
       NaviEntry.setRedisClient(redis.createClient());
       var opts = {
-        containerPort: '80',
+        exposedPort: '80',
         branch:       'branch',
         ownerUsername: 'ownerUsername',
         userContentDomain: 'runnableapp.com',
@@ -168,7 +168,7 @@ describe('NaviEntry', function () {
       );
 
       expect(
-        NaviEntry.createFromHost(host+':'+opts.containerPort).key
+        NaviEntry.createFromHost(host+':'+opts.exposedPort).key
       ).to.equal(
         new NaviEntry(opts).key
       );

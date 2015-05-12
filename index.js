@@ -8,6 +8,7 @@ var last = require('101/last');
 var exists = require('101/exists');
 var defaults = require('101/defaults');
 var isString = require('101/is-string');
+var isFunction = require('101/is-function');
 var keypather = require('keypather')();
 var requireOpt = function (opts, key, instanceKeypath) {
   if (!exists(opts[key])) {
@@ -30,6 +31,7 @@ var formatOpts = function (opts) {
   requireOpt(opts, 'instanceName', 'instance.name');
   requireOpt(opts, 'masterPod', 'instance.masterPod');
   requireOpt(opts, 'branch', 'instance.'+instanceBranchKeypath);
+  requireOpt(opts, 'userContentDomain');
 };
 
 module.exports = NaviEntry;
@@ -37,7 +39,7 @@ module.exports = NaviEntry;
 /**
  * Create hipache host (redis list)
  * @param  {Object|String}  optsOrKey      options or key
- * @param  {String}    opts.containerPort  container.ports hash key - ex: "80/tcp"
+ * @param  {String}    opts.exposedPort    container.ports hash key - ex: "80/tcp"
  * @param  {String}    opts.ownerUsername  instance owner's username
  * @param  {String}    [opts.instance]     instance json (including name, cv and masterPod)
  *                                           required if masterPod, branchName, instanceName not provided
@@ -65,28 +67,28 @@ function NaviEntry (optsOrKey) {
   if (opts) {
     this.opts = opts;
     formatOpts(opts);
-    requireOpt(opts, 'containerPort');
+    requireOpt(opts, 'exposedPort');
 
-    var containerPort     = opts.containerPort;
+    var exposedPort       = opts.exposedPort;
     var instanceName      = opts.instanceName;
     var branch            = opts.branch;
     var masterPod         = opts.masterPod;
     var ownerUsername     = opts.ownerUsername;
     var userContentDomain = opts.userContentDomain;
 
-    containerPort = containerPort.split('/')[0];
+    exposedPort = exposedPort.split('/')[0];
     // the new user domain is active. use the new domain scheme
     var hostname = NaviEntry.createHostname(opts);
     key = [
       'frontend:',
-      containerPort, '.',
+      exposedPort, '.',
       hostname
     ].join('').toLowerCase();
 
     if (opts.masterPod) {
       this.elasticKey = [
         'frontend:',
-        containerPort, '.',
+        exposedPort, '.',
         hostname.replace(new RegExp('^'+branch+'-'), '')
       ].join('').toLowerCase();
     }
@@ -174,14 +176,21 @@ NaviEntry.findInstanceNameForHostname = function (hostname, cb) {
 /**
  * sets the navi entry list values
  * @param {String} backendUrl should be a full url including protocol and port, ex: http://10.0.1.1:80
+ * @param {String} [instanceName] instanceName to set in redis
+ * @param {Function} cb callback
  */
-NaviEntry.prototype.setBackend = function (backendUrl, cb) {
-  if (!this.opts.instanceName) {
-    throw new Error('opts.instanceName is required');
+NaviEntry.prototype.setBackend = function (backendUrl, instanceName, cb) {
+  if (isFunction(instanceName)) {
+    cb = instanceName;
+    instanceName = null;
+  }
+  instanceName = instanceName || this.opts.instanceName;
+  if (!instanceName) {
+    throw new Error('instanceName or opts.instanceName is required');
   }
   this.redisClient.multi()
     .del(this.key)
-    .rpush(this.key, this.opts.instanceName)
+    .rpush(this.key, instanceName)
     .rpush(this.key, backendUrl)
     .exec(cb);
 };

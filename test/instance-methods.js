@@ -43,7 +43,7 @@ describe('NaviEntry instance methods', function () {
       it('should create the redis list entry and set name and backend', function (done) {
         var instanceName = 'instanceName';
         var opts = {
-          containerPort: '80',
+          exposedPort:  '80',
           branch:       'branch',
           instanceName: instanceName,
           ownerUsername: 'ownerUsername',
@@ -68,11 +68,39 @@ describe('NaviEntry instance methods', function () {
         });
       });
 
+      it('should create the redis list entry and set name and backend', function (done) {
+        var instanceName = 'instanceName2';
+        var opts = {
+          exposedPort:  '80',
+          branch:       'branch',
+          instanceName: 'instanceName',
+          ownerUsername: 'ownerUsername',
+          userContentDomain: 'runnableapp.com'
+        };
+        var naviEntry = new NaviEntry(opts);
+        var backendUrl = 'http://10.0.0.1:4000';
+
+        naviEntry.setBackend(backendUrl, instanceName, function (err) {
+          if (err) { return done(err); }
+
+          naviEntry.lrange(0, -1, function (err, values) {
+            if (err) { return done(err); }
+
+            expect(values).to.deep.equal([
+              instanceName,
+              backendUrl
+            ]);
+
+            done();
+          });
+        });
+      });
+
       describe('errors', function () {
 
         it('should callback error if getInstanceName errors', function (done) {
           var opts = {
-            containerPort: '80',
+            exposedPort:  '80',
             branch:       'branch',
             ownerUsername: 'ownerUsername',
             userContentDomain: 'runnableapp.com',
@@ -94,7 +122,7 @@ describe('NaviEntry instance methods', function () {
     describe('findInstanceNameForHostname', function () {
       beforeEach(function (done) {
         var opts = ctx.opts = {
-          containerPort: '80',
+          exposedPort:  '80',
           branch:       'branch',
           instanceName: 'instanceName',
           ownerUsername: 'ownerUsername',
@@ -166,7 +194,7 @@ describe('NaviEntry instance methods', function () {
 
       it('get the instance name', function (done) {
         var opts = {
-          containerPort: '80',
+          exposedPort:  '80',
           branch:       'branch',
           instanceName: 'instanceName',
           ownerUsername: 'ownerUsername',
@@ -188,7 +216,7 @@ describe('NaviEntry instance methods', function () {
     describe('create naviEntry', function () {
       beforeEach(function (done) {
         var opts = ctx.opts = {
-          containerPort: '80',
+          exposedPort:  '80',
           branch:       'branch',
           instanceName: 'instanceName',
           ownerUsername: 'ownerUsername',
