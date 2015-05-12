@@ -109,7 +109,7 @@ describe('NaviEntry instance methods', function () {
 
       describe('errors', function () {
 
-        it('should callback error if getInstanceName errors', function (done) {
+        it('should callback error if opts where not set', function (done) {
           var opts = {
             exposedPort:  '80',
             branch:       'branch',
@@ -124,6 +124,72 @@ describe('NaviEntry instance methods', function () {
           var naviEntry = NaviEntry.createFromHost(host);
           var backendUrl = 'http://10.0.0.1:4000';
           expect(naviEntry.setBackend.bind(naviEntry, backendUrl, noop))
+            .to.throw();
+          done();
+        });
+      });
+    });
+    describe('removeBackend', function () {
+      var backendUrl = 'http://10.0.0.1:4000';
+      var naviEntry;
+      describe('not masterPod', function() {
+        var instanceName = 'instanceName';
+        var opts = {
+          exposedPort:  '80',
+          branch:       'branch',
+          instanceName: instanceName,
+          ownerUsername: 'ownerUsername',
+          userContentDomain: 'runnableapp.com'
+        };
+        beforeEach(function(done) {
+          naviEntry = new NaviEntry(opts);
+          naviEntry.setBackend(backendUrl, done);
+        });
+        it('should remove the redis list entry', function (done) {
+          naviEntry.removeBackend(function (err) {
+            if (err) { return done(err); }
+            naviEntry.lrange(0, -1, function (err, values) {
+              if (err) { return done(err); }
+              expect(values.length).to.equal(0);
+              done();
+            });
+          });
+        });
+      });
+      describe('masterPod', function() {
+        var instanceName = 'instanceName';
+        var opts = {
+          exposedPort:  '80',
+          branch:       'branch',
+          instanceName: instanceName,
+          ownerUsername: 'ownerUsername',
+          userContentDomain: 'runnableapp.com',
+          masterPod: true
+        };
+        beforeEach(function(done) {
+          naviEntry = new NaviEntry(opts);
+          naviEntry.setBackend(backendUrl, done);
+        });
+        it('should remove the redis list entry', function (done) {
+          naviEntry.removeBackend(function (err) {
+            if (err) { return done(err); }
+            naviEntry.lrange(0, -1, function (err, values) {
+              if (err) { return done(err); }
+              expect(values.length).to.equal(0);
+              naviEntry.key = naviEntry.elasticKey;
+              naviEntry.lrange(0, -1, function (err, values) {
+                if (err) { return done(err); }
+                expect(values.length).to.equal(0);
+                done();
+              });
+            });
+          });
+        });
+      });
+      describe('errors', function () {
+        it('should callback error if opts where not set', function (done) {
+          var naviEntry = new NaviEntry('key');
+          expect(naviEntry.removeBackend.bind(naviEntry, noop))
             .to.throw();
           done();
         });

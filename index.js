@@ -13,8 +13,8 @@ var keypather = require('keypather')();
 var requireOpt = function (opts, key, instanceKeypath) {
   if (!exists(opts[key])) {
     var message = instanceKeypath ?
-      'opts.'+key+' or opts.'+instanceKeypath+' is required':
-      'opts.'+key+' is required';
+      'opts.' + key + ' or opts.' + instanceKeypath + ' is required':
+      'opts.' + key + ' is required';
 
     throw new Error(message);
   }
@@ -201,6 +201,26 @@ NaviEntry.prototype.setBackend = function (backendUrl, cb) {
 };
 
 /**
+ * removes the navi entry list values
+ * @param {Function} cb callback
+ */
+NaviEntry.prototype.removeBackend = function (cb) {
+  if (!this.opts.instanceName) {
+    throw new Error('full opts are required');
+  }
+  var task = this.redisClient.multi();
+
+  if (this.opts.masterPod) {
+    var elasticKey = this.elasticKey;
+    // direct url for masterPod:true
+    task.del(elasticKey);
+  }
+  // direct url (masterPod:false) or elastic url (masterPod:true)
+  task.del(this.key);
+  task.exec(cb);
+};
+
+/**
  * get the instance name from the navi entry list
  * @param  {getInstanceNameCb} cb
  */
@@ -221,6 +241,6 @@ NaviEntry.prototype.getInstanceName = function (cb) {
  * @return  {String} elasticHostname
  */
 NaviEntry.prototype.getElasticHostname = function (branch, cb) {
-  var re = new RegExp('^frontend:[0-9]+[.]'+branch+'-');
+  var re = new RegExp('^frontend:[0-9]+[.]' + branch + '-');
   return this.key.replace(re, '');
 };
