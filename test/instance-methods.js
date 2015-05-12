@@ -39,59 +39,70 @@ describe('NaviEntry instance methods', function () {
     });
 
     describe('setBackend', function () {
+      describe('not masterPod', function() {
+        it('should create the redis list entry and set name and backend', function (done) {
+          var instanceName = 'instanceName';
+          var opts = {
+            exposedPort:  '80',
+            branch:       'branch',
+            instanceName: instanceName,
+            ownerUsername: 'ownerUsername',
+            userContentDomain: 'runnableapp.com'
+          };
+          var naviEntry = new NaviEntry(opts);
+          var backendUrl = 'http://10.0.0.1:4000';
 
-      it('should create the redis list entry and set name and backend', function (done) {
-        var instanceName = 'instanceName';
-        var opts = {
-          exposedPort:  '80',
-          branch:       'branch',
-          instanceName: instanceName,
-          ownerUsername: 'ownerUsername',
-          userContentDomain: 'runnableapp.com'
-        };
-        var naviEntry = new NaviEntry(opts);
-        var backendUrl = 'http://10.0.0.1:4000';
-
-        naviEntry.setBackend(backendUrl, function (err) {
-          if (err) { return done(err); }
-
-          naviEntry.lrange(0, -1, function (err, values) {
+          naviEntry.setBackend(backendUrl, function (err) {
             if (err) { return done(err); }
 
-            expect(values).to.deep.equal([
-              instanceName,
-              backendUrl
-            ]);
+            naviEntry.lrange(0, -1, function (err, values) {
+              if (err) { return done(err); }
 
-            done();
+              expect(values).to.deep.equal([
+                instanceName,
+                backendUrl
+              ]);
+
+              done();
+            });
           });
         });
       });
+      describe('masterPod', function() {
+        it('should create the redis list entry and set name and backend', function (done) {
+          var instanceName = 'instanceName';
+          var opts = {
+            exposedPort:  '80',
+            branch:       'branch',
+            instanceName: instanceName,
+            ownerUsername: 'ownerUsername',
+            userContentDomain: 'runnableapp.com',
+            masterPod: true
+          };
+          var naviEntry = new NaviEntry(opts);
+          var ElasticNaviEntry = new NaviEntry(opts);
+          var backendUrl = 'http://10.0.0.1:4000';
 
-      it('should create the redis list entry and set name and backend', function (done) {
-        var instanceName = 'instanceName2';
-        var opts = {
-          exposedPort:  '80',
-          branch:       'branch',
-          instanceName: 'instanceName',
-          ownerUsername: 'ownerUsername',
-          userContentDomain: 'runnableapp.com'
-        };
-        var naviEntry = new NaviEntry(opts);
-        var backendUrl = 'http://10.0.0.1:4000';
-
-        naviEntry.setBackend(backendUrl, instanceName, function (err) {
-          if (err) { return done(err); }
-
-          naviEntry.lrange(0, -1, function (err, values) {
+          naviEntry.setBackend(backendUrl, function (err) {
             if (err) { return done(err); }
 
-            expect(values).to.deep.equal([
-              instanceName,
-              backendUrl
-            ]);
+            naviEntry.lrange(0, -1, function (err, values) {
+              if (err) { return done(err); }
 
-            done();
+              expect(values).to.deep.equal([
+                instanceName,
+                backendUrl
+              ]);
+              naviEntry.key = naviEntry.elasticKey;
+              naviEntry.lrange(0, -1, function (err, values) {
+                if (err) { return done(err); }
+                expect(values).to.deep.equal([
+                  instanceName,
+                  backendUrl
+                ]);
+                done();
+              });
+            });
           });
         });
       });

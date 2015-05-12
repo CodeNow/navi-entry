@@ -176,41 +176,26 @@ NaviEntry.findInstanceNameForHostname = function (hostname, cb) {
 /**
  * sets the navi entry list values
  * @param {String} backendUrl should be a full url including protocol and port, ex: http://10.0.1.1:80
- * @param {String} [instanceName] instanceName to set in redis
- * @param {Boolean} [masterPod] if instance belongs to masterPod
- * @param {String} [branch] branch that the instance is deployed with
  * @param {Function} cb callback
  */
-NaviEntry.prototype.setBackend = function (backendUrl, instanceName, masterPod, branch, cb) {
-  if (isFunction(instanceName)) {
-    cb = instanceName;
-    instanceName = null;
-  }
-  instanceName = instanceName || this.opts.instanceName;
-  if (!instanceName) {
-    throw new Error('instanceName or opts.instanceName is required');
-  }
-  masterPod = exists(masterPod) ? masterPod : this.opts.masterPod;
-  if (!exists(masterPod)) {
-    throw new Error('masterPod or opts.masterPod is required');
+NaviEntry.prototype.setBackend = function (backendUrl, cb) {
+  if (!this.opts.instanceName) {
+    throw new Error('full opts are required');
   }
   var task = this.redisClient.multi();
-  if (masterPod) {
-    branch = branch || this.opts.branch;
-    if (!branch) {
-      throw new Error('branch or opts.branch is required');
-    }
-    var directKey = 'frontend:'+this.getDirectHostname(branch);
+
+  if (this.opts.masterPod) {
+    var elasticKey = this.elasticKey;
     // direct url for masterPod:true
     task
-      .del(directKey)
-      .rpush(directKey, instanceName)
-      .rpush(directKey, backendUrl);
+      .del(elasticKey)
+      .rpush(elasticKey, this.opts.instanceName)
+      .rpush(elasticKey, backendUrl);
   }
   // direct url (masterPod:false) or elastic url (masterPod:true)
   task
     .del(this.key)
-    .rpush(this.key, instanceName)
+    .rpush(this.key, this.opts.instanceName)
     .rpush(this.key, backendUrl);
   task.exec(cb);
 };
@@ -236,35 +221,6 @@ NaviEntry.prototype.getInstanceName = function (cb) {
  * @return  {String} elasticHostname
  */
 NaviEntry.prototype.getElasticHostname = function (branch, cb) {
-  branch = this._validateBranch(branch);
   var re = new RegExp('^frontend:[0-9]+[.]'+branch+'-');
   return this.key.replace(re, '');
-};
-
-/**
- * get the elastic url associated with the naviEntry
- * NOTE: should only be used for a naviEntry with a ELASTIC key
- * @param   {String} [branch]  branch that instance is for
- * @return  {String} elasticHostname
- */
-NaviEntry.prototype.getDirectHostname = function (branch, cb) {
-  branch = this._validateBranch(branch);
-  var re = new RegExp('^frontend:[0-9]+[.]');
-  return this.key.replace(re, branch+'-');
-};
-
-/**
- * validate branch for get_Hostname functions
- * NOTE: should only be used for a naviEntry with a ELASTIC key
- * @param   {String} [branch]  branch that instance is for
- */
-NaviEntry.prototype._validateBranch = function (branch) {
-  if (isFunction(branch)) {
-    branch = null;
-  }
-  branch = branch || this.opts.branch;
-  if (!branch) {
-    throw new Error('branch or opts.branch is required');
-  }
-  return branch;
 };
