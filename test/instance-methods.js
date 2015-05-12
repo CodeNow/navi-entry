@@ -129,7 +129,7 @@ describe('NaviEntry instance methods', function () {
         });
       });
     });
-    describe('removeBackend', function () {
+    describe('del', function () {
       var backendUrl = 'http://10.0.0.1:4000';
       var naviEntry;
       describe('not masterPod', function() {
@@ -146,7 +146,7 @@ describe('NaviEntry instance methods', function () {
           naviEntry.setBackend(backendUrl, done);
         });
         it('should remove the redis list entry', function (done) {
-          naviEntry.removeBackend(function (err) {
+          naviEntry.del(function (err) {
             if (err) { return done(err); }
             naviEntry.lrange(0, -1, function (err, values) {
               if (err) { return done(err); }
@@ -171,7 +171,7 @@ describe('NaviEntry instance methods', function () {
           naviEntry.setBackend(backendUrl, done);
         });
         it('should remove the redis list entry', function (done) {
-          naviEntry.removeBackend(function (err) {
+          naviEntry.del(function (err) {
             if (err) { return done(err); }
             naviEntry.lrange(0, -1, function (err, values) {
               if (err) { return done(err); }
@@ -189,7 +189,7 @@ describe('NaviEntry instance methods', function () {
       describe('errors', function () {
         it('should callback error if opts where not set', function (done) {
           var naviEntry = new NaviEntry('key');
-          expect(naviEntry.removeBackend.bind(naviEntry, noop))
+          expect(naviEntry.del.bind(naviEntry, noop))
             .to.throw();
           done();
         });

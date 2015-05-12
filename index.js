@@ -204,7 +204,7 @@ NaviEntry.prototype.setBackend = function (backendUrl, cb) {
  * removes the navi entry list values
  * @param {Function} cb callback
  */
-NaviEntry.prototype.removeBackend = function (cb) {
+NaviEntry.prototype.del = function (cb) {
   if (!this.opts.instanceName) {
     throw new Error('full opts are required');
   }
