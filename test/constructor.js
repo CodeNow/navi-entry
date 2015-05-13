@@ -89,7 +89,8 @@ describe('NaviEntry', function () {
         branch:       'branch',
         instanceName: 'instanceName',
         ownerUsername: 'ownerUsername',
-        userContentDomain: 'runnableapp.com'
+        userContentDomain: 'runnableapp.com',
+        masterPod: false
       };
       var naviEntry = new NaviEntry(opts);
 

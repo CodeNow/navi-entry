@@ -4,7 +4,8 @@
   "description": "A redis list class for a navi entry",
   "main": "index.js",
   "scripts": {
-    "test": "lab -t 100"
+    "test": "lab -t 100",
+    "test-nocov": "lab"
   },
   "repository": {
     "type": "git",

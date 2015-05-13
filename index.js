@@ -12,23 +12,14 @@ var isFunction = require('101/is-function');
 var keypather = require('keypather')();
 var requireOpt = function (opts, key, instanceKeypath) {
   if (!exists(opts[key])) {
-    var message = instanceKeypath ?
-      'opts.' + key + ' or opts.' + instanceKeypath + ' is required':
-      'opts.' + key + ' is required';
-
+    var message = 'opts.' + key + ' is required';
     throw new Error(message);
   }
 };
 var formatOpts = function (opts) {
-  var instance = opts.instance || {};
-  var instanceBranchKeypath = 'contextVersion.appCodeVersions[0].lowerBranch';
-  defaults(opts, {
-    instanceName: instance.name,
-    masterPod   : instance.masterPod || false
-  });
   requireOpt(opts, 'ownerUsername');
-  requireOpt(opts, 'instanceName', 'instance.name');
-  requireOpt(opts, 'masterPod', 'instance.masterPod');
+  requireOpt(opts, 'instanceName');
+  requireOpt(opts, 'masterPod');
   requireOpt(opts, 'userContentDomain');
 };
 
@@ -137,7 +128,7 @@ NaviEntry.createFromUrl = function (uri) {
 NaviEntry.createHostname = function (opts) {
   formatOpts(opts);
   // if branch, add -, else keep null
-  var branch = branch ? branch + '-' : null;
+  var branch = opts.branch ? opts.branch + '-' : null;
   return [
     branch, opts.instanceName, '-staging-', opts.ownerUsername, '.',
     opts.userContentDomain

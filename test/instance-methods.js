@@ -47,7 +47,8 @@ describe('NaviEntry instance methods', function () {
             branch:       'branch',
             instanceName: instanceName,
             ownerUsername: 'ownerUsername',
-            userContentDomain: 'runnableapp.com'
+            userContentDomain: 'runnableapp.com',
+            masterPod: false
           };
           var naviEntry = new NaviEntry(opts);
           var backendUrl = 'http://10.0.0.1:4000';
@@ -115,10 +116,8 @@ describe('NaviEntry instance methods', function () {
             branch:       'branch',
             ownerUsername: 'ownerUsername',
             userContentDomain: 'runnableapp.com',
-            instance: {
-              masterPod: true,
-              name: 'instanceName'
-            }
+            masterPod: true,
+            instanceName: 'instanceName'
           };
           var host = NaviEntry.createHostname(opts);
           var naviEntry = NaviEntry.createFromHost(host);
@@ -192,77 +191,6 @@ describe('NaviEntry instance methods', function () {
           expect(naviEntry.del.bind(naviEntry, noop))
             .to.throw();
           done();
-        });
-      });
-    });
-
-    describe('findInstanceNameForHostname', function () {
-      beforeEach(function (done) {
-        var opts = ctx.opts = {
-          exposedPort:  '80',
-          branch:       'branch',
-          instanceName: 'instanceName',
-          ownerUsername: 'ownerUsername',
-          userContentDomain: 'runnableapp.com'
-        };
-        ctx.naviEntry = new NaviEntry(ctx.opts);
-        var backendUrl = 'http://10.0.0.1:4000';
-        ctx.hostname = [
-          opts.branch, '-', opts.instanceName, '-staging-', opts.ownerUsername, '.',
-          opts.userContentDomain
-        ].join('').toLowerCase();
-        ctx.naviEntry.setBackend(backendUrl, done);
-      });
-
-      it('should find the instance name for the hostname', function (done) {
-        NaviEntry.findInstanceNameForHostname(ctx.hostname, done);
-      });
-
-      describe('no redis client', function() {
-        beforeEach(function (done) {
-          delete redisTypes.Key.prototype.redisClient;
-          done();
-        });
-
-        it('should throw an error', function (done) {
-          expect(
-            NaviEntry.findInstanceNameForHostname.bind(NaviEntry, ctx.hostname)
-          ).to.throw();
-          done();
-        });
-      });
-
-      describe('redis client error', function() {
-        beforeEach(function (done) {
-          ctx.err = new Error('boom');
-          ctx.keysStub = sinon.stub(redisTypes.Key.prototype.redisClient, 'keys')
-            .yieldsAsync(ctx.err);
-          done();
-        });
-        afterEach(function (done) {
-          ctx.keysStub.restore();
-          done();
-        });
-
-        it('should callback the error', function (done) {
-          NaviEntry.findInstanceNameForHostname(ctx.hostname, function (err) {
-            expect(err).to.equal(ctx.err);
-            done();
-          });
-        });
-      });
-
-      describe('no entry in redis', function () {
-        beforeEach(function (done) {
-          ctx.naviEntry.del(done);
-        });
-
-        it('should callback hostname not found', function (done) {
-          NaviEntry.findInstanceNameForHostname(ctx.hostname, function (err) {
-            expect(err).to.exist();
-            expect(err.message).to.match(/hostname not found/);
-            done();
-          });
         });
       });
     });
