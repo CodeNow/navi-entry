@@ -27,8 +27,6 @@ module.exports = NaviEntry;
  * @param  {Object|String}  optsOrKey      options or key
  * @param  {String}    opts.exposedPort    container.ports hash key - ex: "80/tcp"
  * @param  {String}    opts.ownerUsername  instance owner's username
- * @param  {String}    [opts.instance]     instance json (including name, cv and masterPod)
- *                                         required if masterPod, branchName, instanceName not provided
  * @param  {String}    [opts.instanceName] instance name
  *                                           will override instance value if both are provided
  *                                           required if instance not provided
@@ -38,7 +36,7 @@ module.exports = NaviEntry;
  * @param  {String}    [opts.masterPod]    whether instance is a masterPod
  *                                           will override instance value if both are provided
  *                                           defaults to false
- * @return {RedisList} hipache host   redis list
+ * @return {RedisList} hipache host        redis list
  */
 function NaviEntry (optsOrKey) {
   var key, opts;
