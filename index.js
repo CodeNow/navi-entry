@@ -56,13 +56,14 @@ function NaviEntry (optsOrKey) {
 
     // the new user domain is active. use the new domain scheme
     this._createKeys(opts);
+    key = this.directKey || this.elasticKey;
   }
   else {
     this.opts = {};
   }
   // this key passing doesn't matter but calling RedisList validates
   // that redis-types has a redis client
-  RedisList.call(this, this.directKey || this.elasticKey);
+  RedisList.call(this, key);
 }
 
 require('util').inherits(NaviEntry, RedisList);
