@@ -241,6 +241,37 @@ NaviEntry.prototype.getInstanceName = function (cb) {
  * @return  {String} elasticHostname
  */
 NaviEntry.prototype.getElasticHostname = function (branch, cb) {
-  var re = new RegExp('^frontend:[0-9]+[.]' + branch + '-');
+  branch = this._validateBranch(branch);
+  var re = new RegExp('^frontend:[0-9]+[.]'+branch+'-');
   return this.key.replace(re, '');
+};
+
+/**
+ * get the elastic url associated with the naviEntry
+ * NOTE: should only be used for a naviEntry with a ELASTIC key
+ * @param   {String} [branch]  branch that instance is for
+ * @return  {String} elasticHostname
+ */
+NaviEntry.prototype.getDirectHostname = function (branch, cb) {
+  branch = this._validateBranch(branch);
+  var re = new RegExp('^frontend:[0-9]+[.]');
+  return this.elasticKey ?
+    this.elasticKey.replace(re, branch+'-'):
+    this.key.replace(re, '');
+};
+
+/**
+ * validate branch for get_Hostname functions
+ * NOTE: should only be used for a naviEntry with a ELASTIC key
+ * @param   {String} [branch]  branch that instance is for
+ */
+NaviEntry.prototype._validateBranch = function (branch) {
+  if (isFunction(branch)) {
+    branch = null;
+  }
+  branch = branch || this.opts.branch;
+  if (!branch) {
+    throw new Error('branch or opts.branch is required');
+  }
+  return branch;
 };
