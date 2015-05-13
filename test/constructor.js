@@ -107,6 +107,7 @@ describe('NaviEntry', function () {
       describe('masterPod:false', function () {
         beforeEach(function (done) {
           ctx.opts.masterPod = false;
+          ctx.opts.instanceName = ctx.opts.branch+'-'+ctx.opts.instanceName;
           done();
         });
 
@@ -160,11 +161,15 @@ describe('NaviEntry', function () {
 
 
       function expectDirectKey (naviEntry, opts) {
+        var branchPart = opts.masterPod ?
+          opts.branch+'-':
+          ''; // non masterPod instances include branch in their name
         expect(naviEntry.directKey)
           .to.equal([
             'frontend:',
             opts.exposedPort, '.',
-            opts.branch, '-', opts.instanceName, '-staging-', opts.ownerUsername, '.',
+            branchPart,
+            opts.instanceName, '-staging-', opts.ownerUsername, '.',
             opts.userContentDomain
           ].join('').toLowerCase());
         expect(naviEntry.opts.exposedPort).to.equal(opts.exposedPort);

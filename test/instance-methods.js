@@ -51,6 +51,7 @@ describe('NaviEntry instance methods', function () {
       describe('masterPod:false', function () {
         beforeEach(function (done) {
           ctx.opts.masterPod = false;
+          ctx.opts.instanceName = ctx.opts.branch+'-'+ctx.opts.instanceName;
           done();
         });
         afterEach(function (done) {
@@ -153,6 +154,7 @@ describe('NaviEntry instance methods', function () {
       describe('masterPod:false', function () {
         beforeEach(function (done) {
           ctx.opts.masterPod = false;
+          ctx.opts.instanceName = ctx.opts.branch+'-'+ctx.opts.instanceName;
           done();
         });
         beforeEach(createEntryAndSet);
@@ -243,7 +245,8 @@ describe('NaviEntry instance methods', function () {
         var opts = ctx.opts = {
           exposedPort:  '80',
           branch:       'branch',
-          instanceName: 'instanceName',
+          // instanceName includes branch, masterPod:false
+          instanceName: 'branch-instanceName',
           ownerUsername: 'ownerUsername',
           userContentDomain: 'runnableapp.com',
           masterPod: false

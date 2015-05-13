@@ -110,7 +110,8 @@ NaviEntry.prototype._createKeys = function () {
 };
 
 /**
- * Create redis elastic key from opts, sets this.elasticKey
+ * Create redis elastic key from opts, sets this.elasticKey.
+ * Only created when opts.masterPod:true
  */
 NaviEntry.prototype._createElasticKey = function () {
   this.elasticKey = [
@@ -126,14 +127,22 @@ NaviEntry.prototype._createElasticKey = function () {
  * Create redis direct key from opts, sets this.directKey
  */
 NaviEntry.prototype._createDirectKey = function () {
-  this.directKey = [
-    'frontend:',
-    this.opts.exposedPort, '.',
-    this.opts.branch, '-',
-    this.opts.instanceName,
-    '-staging-', this.opts.ownerUsername, '.',
-    this.opts.userContentDomain
-  ].join('').toLowerCase();
+  this.directKey = this.opts.masterPod ?
+    [
+      'frontend:',
+      this.opts.exposedPort, '.',
+      this.opts.branch, '-',   // masterPod instance name does not include branch
+      this.opts.instanceName,
+      '-staging-', this.opts.ownerUsername, '.',
+      this.opts.userContentDomain
+    ].join('').toLowerCase() :
+    [
+      'frontend:',
+      this.opts.exposedPort, '.',
+      this.opts.instanceName,  // non-masterPod instance name already includes branch
+      '-staging-', this.opts.ownerUsername, '.',
+      this.opts.userContentDomain
+    ].join('').toLowerCase();
 };
 
 /**
