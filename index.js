@@ -136,8 +136,10 @@ NaviEntry.createFromUrl = function (uri) {
  */
 NaviEntry.createHostname = function (opts) {
   formatOpts(opts);
+  // if branch, add -, else keep null
+  var branch = branch ? branch + '-' : null;
   return [
-    opts.branch, '-', opts.instanceName, '-staging-', opts.ownerUsername, '.',
+    branch, opts.instanceName, '-staging-', opts.ownerUsername, '.',
     opts.userContentDomain
   ].join('').toLowerCase();
 };
