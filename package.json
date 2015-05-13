@@ -5,6 +5,7 @@
   "main": "index.js",
   "scripts": {
     "test": "lab -t 100",
+    "test-watch": "nodemon -x npm test",
     "test-nocov": "lab"
   },
   "repository": {
@@ -19,6 +20,7 @@
   "homepage": "https://github.com/CodeNow/navi-entry#readme",
   "dependencies": {
     "101": "^0.16.1",
+    "callback-count": "^0.1.0",
     "error-cat": "^1.1.1",
     "keypather": "^1.10.1",
     "redis-types": "^0.2.4"
@@ -26,6 +28,7 @@
   "devDependencies": {
     "code": "^1.4.0",
     "lab": "^5.8.0",
+    "nodemon": "^1.3.7",
     "redis": "^0.12.1",
     "sinon": "^1.14.1"
   }

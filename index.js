@@ -5,7 +5,6 @@ var redisTypes = require('redis-types');
 var RedisList  = redisTypes.List;
 var exists = require('101/exists');
 var isString = require('101/is-string');
-var isFunction = require('101/is-function');
 var requireOpt = function (opts, key) {
   if (!exists(opts[key])) {
     var message = 'opts.' + key + ' is required';
@@ -119,7 +118,9 @@ NaviEntry.prototype._createElasticKey = function () {
   this.elasticKey = [
     'frontend:',
     this.opts.exposedPort, '.',
-    this.opts.instanceName
+    this.opts.instanceName,
+    '-staging-', this.opts.ownerUsername, '.',
+    this.opts.userContentDomain
   ].join('').toLowerCase();
 };
 
@@ -131,7 +132,9 @@ NaviEntry.prototype._createDirectKey = function () {
     'frontend:',
     this.opts.exposedPort, '.',
     this.opts.branch, '-',
-    this.opts.instanceName
+    this.opts.instanceName,
+    '-staging-', this.opts.ownerUsername, '.',
+    this.opts.userContentDomain
   ].join('').toLowerCase();
 };
 
@@ -215,7 +218,9 @@ NaviEntry.prototype.getInstanceName = function (cb) {
  * @return  {String} elasticHostname
  */
 NaviEntry.prototype.getElasticHostname = function (branch) {
-  branch = this._validateBranch(branch);
+  if (!this.elasticKey) {
+    branch = this._validateBranch(branch);
+  }
   var elasticRe = new RegExp('^frontend:[0-9]+[.]');
   var directRe = new RegExp('^frontend:[0-9]+[.]'+branch+'-');
   return this.elasticKey ?

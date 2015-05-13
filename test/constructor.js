@@ -42,10 +42,9 @@ describe('NaviEntry', function () {
 
   describe('constructor', function () {
 
-    describe('errors', function() {
+    describe('errors', function () {
 
       it('should error if missing args', function (done) {
-        var expectedErrMessage = 'missing arguments';
         expect(
           createNaviEntry.bind(null, {
             exposedPort: '80'})
@@ -92,68 +91,104 @@ describe('NaviEntry', function () {
       });
     });
 
-    it('should create an NaviEntry instance', function (done) {
-      NaviEntry.setRedisClient(redis.createClient());
-      var opts = {
-        exposedPort: '80',
-        branch:       'branch',
-        instanceName: 'instanceName',
-        ownerUsername: 'ownerUsername',
-        userContentDomain: 'runnableapp.com',
-        masterPod: false
-      };
-      var naviEntry = new NaviEntry(opts);
+    describe('success', function () {
+      beforeEach(function (done) {
+        NaviEntry.setRedisClient(redis.createClient());
+        ctx.opts = {
+          exposedPort: '80',
+          branch:       'branch',
+          ownerUsername: 'ownerUsername',
+          userContentDomain: 'runnableapp.com',
+          instanceName: 'instanceName'
+        };
+        done();
+      });
 
-      expect(naviEntry.key)
-        .to.equal([
-          'frontend:',
-          opts.exposedPort, '.',
-          opts.branch, '-', opts.instanceName, '-staging-', opts.ownerUsername, '.',
-          opts.userContentDomain
-        ].join('').toLowerCase());
-      expect(naviEntry.opts.exposedPort).to.equal(opts.exposedPort);
-      expect(naviEntry.opts.instanceName).to.equal(opts.instanceName);
-      expect(naviEntry.opts.branch).to.equal(opts.branch);
-      expect(naviEntry.opts.ownerUsername).to.equal(opts.ownerUsername);
-      expect(naviEntry.opts.userContentDomain).to.equal(opts.userContentDomain);
+      describe('masterPod:false', function () {
+        beforeEach(function (done) {
+          ctx.opts.masterPod = false;
+          done();
+        });
 
-      done();
+        it('should create an NaviEntry instance', function (done) {
+          var opts = ctx.opts;
+          var naviEntry = new NaviEntry(ctx.opts);
+
+          expectDirectKey(naviEntry, opts);
+          expect(naviEntry.elasticKey).to.not.exist();
+          expect(naviEntry.key).to.equal(naviEntry.directKey);
+
+          done();
+        });
+      });
+
+      describe('masterPod:true', function () {
+        beforeEach(function (done) {
+          ctx.opts.masterPod = true;
+          done();
+        });
+
+        it('should create an NaviEntry instance, masterPod:true', function (done) {
+          var opts = ctx.opts;
+          var naviEntry = new NaviEntry(ctx.opts);
+
+          expectDirectKey(naviEntry, opts);
+          expectElasticKey(naviEntry, opts);
+          expect(naviEntry.key).to.equal(naviEntry.directKey);
+
+          done();
+        });
+
+        describe('branch:undefined', function () {
+          beforeEach(function (done) {
+            delete ctx.opts.branch;
+            done();
+          });
+
+          it('should create a NaviEntry instance', function (done) {
+            var opts = ctx.opts;
+            var naviEntry = new NaviEntry(ctx.opts);
+
+            expect(naviEntry.directKey).to.not.exist();
+            expectElasticKey(naviEntry, opts);
+            expect(naviEntry.elasticKey).to.equal(naviEntry.key);
+
+            done();
+          });
+        });
+      });
+
+
+      function expectDirectKey (naviEntry, opts) {
+        expect(naviEntry.directKey)
+          .to.equal([
+            'frontend:',
+            opts.exposedPort, '.',
+            opts.branch, '-', opts.instanceName, '-staging-', opts.ownerUsername, '.',
+            opts.userContentDomain
+          ].join('').toLowerCase());
+        expect(naviEntry.opts.exposedPort).to.equal(opts.exposedPort);
+        expect(naviEntry.opts.instanceName).to.equal(opts.instanceName);
+        expect(naviEntry.opts.branch).to.equal(opts.branch);
+        expect(naviEntry.opts.ownerUsername).to.equal(opts.ownerUsername);
+        expect(naviEntry.opts.userContentDomain).to.equal(opts.userContentDomain);
+      }
+      function expectElasticKey (naviEntry, opts) {
+        expect(naviEntry.elasticKey)
+          .to.equal([
+            'frontend:',
+            opts.exposedPort, '.',
+            opts.instanceName, '-staging-', opts.ownerUsername, '.',
+            opts.userContentDomain
+          ].join('').toLowerCase());
+        expect(naviEntry.opts.exposedPort).to.equal(opts.exposedPort);
+        expect(naviEntry.opts.instanceName).to.equal(opts.instanceName);
+        expect(naviEntry.opts.branch).to.equal(opts.branch);
+        expect(naviEntry.opts.ownerUsername).to.equal(opts.ownerUsername);
+        expect(naviEntry.opts.userContentDomain).to.equal(opts.userContentDomain);
+      }
     });
 
-    it('should create an NaviEntry instance for a masterPod instance', function(done) {
-      NaviEntry.setRedisClient(redis.createClient());
-      var opts = {
-        exposedPort: '80',
-        branch:       'branch',
-        ownerUsername: 'ownerUsername',
-        userContentDomain: 'runnableapp.com',
-        masterPod: true,
-        instanceName: 'altname'
-      };
-      var naviEntry = new NaviEntry(opts);
-
-      expect(naviEntry.key)
-        .to.equal([
-          'frontend:',
-          opts.exposedPort, '.',
-          opts.branch, '-', opts.instanceName, '-staging-', opts.ownerUsername, '.',
-          opts.userContentDomain
-        ].join('').toLowerCase());
-      expect(naviEntry.elasticKey)
-        .to.equal([
-          'frontend:',
-          opts.exposedPort, '.',
-          opts.instanceName, '-staging-', opts.ownerUsername, '.',
-          opts.userContentDomain
-        ].join('').toLowerCase());
-      expect(naviEntry.opts.exposedPort).to.equal(opts.exposedPort);
-      expect(naviEntry.opts.instanceName).to.equal(opts.instanceName);
-      expect(naviEntry.opts.branch).to.equal(opts.branch);
-      expect(naviEntry.opts.ownerUsername).to.equal(opts.ownerUsername);
-      expect(naviEntry.opts.userContentDomain).to.equal(opts.userContentDomain);
-
-      done();
-    });
   });
 
   describe('createFromHostnameAndPort', function () {
@@ -167,7 +202,7 @@ describe('NaviEntry', function () {
         masterPod: true,
         instanceName: 'instanceName'
       };
-      var host = NaviEntry.createHostname(opts);
+      var host = new NaviEntry(opts).getDirectHostname();
       expect(
         NaviEntry.createFromHost(host).key
       ).to.equal(
