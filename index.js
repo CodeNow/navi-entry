@@ -5,7 +5,6 @@ var redisTypes = require('redis-types');
 var RedisList  = redisTypes.List;
 var exists = require('101/exists');
 var isString = require('101/is-string');
-var isFunction = require('101/is-function');
 var requireOpt = function (opts, key) {
   if (!exists(opts[key])) {
     var message = 'opts.' + key + ' is required';
@@ -29,7 +28,7 @@ module.exports = NaviEntry;
  * @param  {String}    opts.exposedPort    container.ports hash key - ex: "80/tcp"
  * @param  {String}    opts.ownerUsername  instance owner's username
  * @param  {String}    [opts.instance]     instance json (including name, cv and masterPod)
- *                                           required if masterPod, branchName, instanceName not provided
+ *                                         required if masterPod, branchName, instanceName not provided
  * @param  {String}    [opts.instanceName] instance name
  *                                           will override instance value if both are provided
  *                                           required if instance not provided
@@ -151,7 +150,7 @@ NaviEntry.setRedisClient = function (redisClient) {
 
 /**
  * sets the navi entry list values
- * @param {String} backendUrl should be a full url including protocol and port, ex: http://10.0.1.1:80
+ * @param {String} backendUrl should be a full url: protocol and port, ex: http://10.0.1.1:80
  * @param {Function} cb callback
  */
 NaviEntry.prototype.setBackend = function (backendUrl, cb) {
