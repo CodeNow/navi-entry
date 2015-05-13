@@ -67,26 +67,14 @@ function NaviEntry (optsOrKey) {
 
     exposedPort = exposedPort.split('/')[0];
     // the new user domain is active. use the new domain scheme
-    var hostname = NaviEntry.createHostname(opts);
-    key = [
-      'frontend:',
-      exposedPort, '.',
-      hostname
-    ].join('').toLowerCase();
-
-    if (opts.masterPod) {
-      this.elasticKey = [
-        'frontend:',
-        exposedPort, '.',
-        hostname.replace(new RegExp('^'+branch+'-'), '')
-      ].join('').toLowerCase();
-    }
+    this._createKeys(opts);
   }
   else {
     this.opts = {};
   }
-
-  RedisList.call(this, key);
+  // this key passing doesn't matter but calling RedisList validates
+  // that redis-types has a redis client
+  RedisList.call(this, this.directKey || this.elasticKey);
 }
 
 require('util').inherits(NaviEntry, RedisList);
@@ -117,21 +105,44 @@ NaviEntry.createFromUrl = function (uri) {
 };
 
 /**
- * Create host from ops
- * @param  {Object}    opts                options
- * @param  {String}    opts.ownerUsername  instance owner's username
- * @param  {String}    opts.instanceName   instance name
- * @param  {String}    opts.branch         instance's cv's repos branch
- * @param  {String}    opts.masterPod      whether instance is a masterPod
- * @return {String}    host                host
+ * Create redis key from opts
+ * @param  {Object}    this.opts   options is required
  */
-NaviEntry.createHostname = function (opts) {
-  formatOpts(opts);
-  // if branch, add -, else keep null
-  var branch = opts.branch ? opts.branch + '-' : null;
-  return [
-    branch, opts.instanceName, '-staging-', opts.ownerUsername, '.',
-    opts.userContentDomain
+NaviEntry.prototype._createKey = function () {
+  if (this.opts.masterPod) { // master w/ repo, ex: api master
+    if (this.opts.branch) {
+      this._createElasticKey();
+      this._createDirectKey();
+    }
+    else { // masterPod w/out repo, ex: mongo
+      this._createElasticKey();
+    }
+  }
+  else { // direct, ex: auto launch
+    this._createDirectKey();
+  }
+};
+
+/**
+ * Create redis elastic key from opts, sets this.elasticKey
+ */
+NaviEntry.prototype._createElasticKey = function () {
+  this.elasticKey = [
+    'frontend:',
+    this.opts.exposedPort, '.',
+    this.opts.instanceName
+  ].join('').toLowerCase();
+};
+
+/**
+ * Create redis direct key from opts, sets this.directKey
+ */
+NaviEntry.prototype._createDirectKey = function () {
+  this.directKey = [
+    'frontend:',
+    this.opts.exposedPort, '.',
+    this.opts.branch, '-',
+    this.opts.instanceName
   ].join('').toLowerCase();
 };
 
@@ -154,23 +165,22 @@ NaviEntry.prototype.setBackend = function (backendUrl, cb) {
   }
   var task = this.redisClient.multi();
 
-  // should create elastic if a masterPod or if there is no branch
-  if (this.opts.masterPod || !this.opts.branch) {
-    var elasticKey = this.elasticKey;
+  var elasticKey = this.elasticKey;
+  var directKey = this.directKey;
+  if (elasticKey) {
     // direct url for masterPod:true
     task
       .del(elasticKey)
       .rpush(elasticKey, this.opts.instanceName)
       .rpush(elasticKey, backendUrl);
   }
-  // should create direct only if there is a branch
-  if (this.opts.branch) {
-    // direct url (masterPod:false) or elastic url (masterPod:true)
+  if (directKey) {
     task
-      .del(this.key)
-      .rpush(this.key, this.opts.instanceName)
-      .rpush(this.key, backendUrl);
+      .del(directKey)
+      .rpush(directKey, this.opts.instanceName)
+      .rpush(directKey, backendUrl);
   }
+
   task.exec(cb);
 };
 
@@ -184,13 +194,15 @@ NaviEntry.prototype.del = function (cb) {
   }
   var task = this.redisClient.multi();
 
-  if (this.opts.masterPod) {
-    var elasticKey = this.elasticKey;
-    // direct url for masterPod:true
+  var elasticKey = this.elasticKey;
+  var directKey = this.directKey;
+  if (elasticKey) {
     task.del(elasticKey);
   }
-  // direct url (masterPod:false) or elastic url (masterPod:true)
-  task.del(this.key);
+  if (directKey) {
+    task.del(directKey);
+  }
+
   task.exec(cb);
 };
 
@@ -216,8 +228,11 @@ NaviEntry.prototype.getInstanceName = function (cb) {
  */
 NaviEntry.prototype.getElasticHostname = function (branch, cb) {
   branch = this._validateBranch(branch);
-  var re = new RegExp('^frontend:[0-9]+[.]'+branch+'-');
-  return this.key.replace(re, '');
+  var elasticRe = new RegExp('^frontend:[0-9]+[.]');
+  var directRe = new RegExp('^frontend:[0-9]+[.]'+branch+'-');
+  return this.elasticKey ?
+    this.elasticKey.replace(elasticRe, ''):
+    this.directKey.replace(directRe, '');
 };
 
 /**
@@ -231,7 +246,7 @@ NaviEntry.prototype.getDirectHostname = function (branch, cb) {
   var re = new RegExp('^frontend:[0-9]+[.]');
   return this.elasticKey ?
     this.elasticKey.replace(re, branch+'-'):
-    this.key.replace(re, '');
+    this.directKey.replace(re, '');
 };
 
 /**

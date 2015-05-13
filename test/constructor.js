@@ -63,6 +63,15 @@ describe('NaviEntry', function () {
             ownerUsername: 'ownerUsername'
           })
         ).to.throw();
+        expect(
+          createNaviEntry.bind(null, {
+            exposedPort: '80',
+            branch:       'branch',
+            instanceName: 'instanceName',
+            ownerUsername: 'ownerUsername',
+            userContentDomain: 'runnableapp.com'
+          })
+        ).to.throw(Error, /masterPod/);
 
         done();
       });
@@ -74,7 +83,8 @@ describe('NaviEntry', function () {
             branch:       'branch',
             instanceName: 'instanceName',
             ownerUsername: 'ownerUsername',
-            userContentDomain: 'runnableapp.com'
+            userContentDomain: 'runnableapp.com',
+            masterPod: true
           })
         ).to.throw(Error, /redis client/);
 
@@ -117,10 +127,8 @@ describe('NaviEntry', function () {
         branch:       'branch',
         ownerUsername: 'ownerUsername',
         userContentDomain: 'runnableapp.com',
-        instance: {
-          masterPod: true,
-          name: 'altname'
-        }
+        masterPod: true,
+        instanceName: 'altname'
       };
       var naviEntry = new NaviEntry(opts);
 
@@ -128,14 +136,14 @@ describe('NaviEntry', function () {
         .to.equal([
           'frontend:',
           opts.exposedPort, '.',
-          opts.branch, '-', opts.instance.name, '-staging-', opts.ownerUsername, '.',
+          opts.branch, '-', opts.instanceName, '-staging-', opts.ownerUsername, '.',
           opts.userContentDomain
         ].join('').toLowerCase());
       expect(naviEntry.elasticKey)
         .to.equal([
           'frontend:',
           opts.exposedPort, '.',
-          opts.instance.name, '-staging-', opts.ownerUsername, '.',
+          opts.instanceName, '-staging-', opts.ownerUsername, '.',
           opts.userContentDomain
         ].join('').toLowerCase());
       expect(naviEntry.opts.exposedPort).to.equal(opts.exposedPort);
@@ -156,10 +164,8 @@ describe('NaviEntry', function () {
         branch:       'branch',
         ownerUsername: 'ownerUsername',
         userContentDomain: 'runnableapp.com',
-        instance: {
-          masterPod: true,
-          name: 'instanceName'
-        }
+        masterPod: true,
+        instanceName: 'instanceName'
       };
       var host = NaviEntry.createHostname(opts);
       expect(

@@ -38,6 +38,21 @@ describe('NaviEntry instance methods', function () {
       done();
     });
 
+    describe('createHostname', function () {
+      var opts = {
+        exposedPort:  '80',
+        ownerUsername: 'ownerUsername',
+        userContentDomain: 'runnableapp.com',
+        masterPod: true,
+        instanceName: 'instanceName'
+      };
+      var host = NaviEntry.createHostname(opts);
+      expect(host).to.equal([
+        opts.instanceName, '-staging-', opts.ownerUsername, '.',
+        opts.userContentDomain
+      ].join('').toLowerCase());
+    });
+
     describe('setBackend', function () {
       describe('not masterPod', function() {
         it('should create the redis list entry and set name and backend', function (done) {
@@ -138,7 +153,8 @@ describe('NaviEntry instance methods', function () {
           branch:       'branch',
           instanceName: instanceName,
           ownerUsername: 'ownerUsername',
-          userContentDomain: 'runnableapp.com'
+          userContentDomain: 'runnableapp.com',
+          masterPod: false
         };
         beforeEach(function(done) {
           naviEntry = new NaviEntry(opts);
@@ -203,7 +219,8 @@ describe('NaviEntry instance methods', function () {
           branch:       'branch',
           instanceName: 'instanceName',
           ownerUsername: 'ownerUsername',
-          userContentDomain: 'runnableapp.com'
+          userContentDomain: 'runnableapp.com',
+          masterPod: false
         };
         var naviEntry = new NaviEntry(opts);
         var backendUrl = 'http://10.0.0.1:4000';
@@ -225,7 +242,8 @@ describe('NaviEntry instance methods', function () {
           branch:       'branch',
           instanceName: 'instanceName',
           ownerUsername: 'ownerUsername',
-          userContentDomain: 'runnableapp.com'
+          userContentDomain: 'runnableapp.com',
+          masterPod: false
         };
         var naviEntry = ctx.naviEntry = new NaviEntry(opts);
         var backendUrl = 'http://10.0.0.1:4000';
