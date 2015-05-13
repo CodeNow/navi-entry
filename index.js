@@ -100,24 +100,22 @@ NaviEntry.createFromUrl = function (uri) {
  * @param  {Object}    this.opts   options is required
  */
 NaviEntry.prototype._createKeys = function () {
-  if (this.opts.masterPod) { // master w/ repo, ex: api master
-    if (this.opts.branch) {
-      this._createElasticKey();
-      this._createDirectKey();
-    }
-    else { // masterPod w/out repo, ex: mongo
-      this._createElasticKey();
-    }
-  }
-  else { // direct, ex: auto launch
-    this._createDirectKey();
+  // always create a key with no branch name
+  // non-master will have branch in instanceName
+  // master uses this as elastic
+  this._createKeyNoBranch();
+
+  if (this.opts.branch &&
+      this.opts.masterPod) {
+    // for masterpods with repos also create key with repo branch
+    this._createKeyWithBranch();
   }
 };
 
 /**
  * Create redis elastic key from opts, sets this.elasticKey
  */
-NaviEntry.prototype._createElasticKey = function () {
+NaviEntry.prototype._createKeyNoBranch = function () {
   this.elasticKey = [
     'frontend:',
     this.opts.exposedPort, '.',
@@ -130,7 +128,7 @@ NaviEntry.prototype._createElasticKey = function () {
 /**
  * Create redis direct key from opts, sets this.directKey
  */
-NaviEntry.prototype._createDirectKey = function () {
+NaviEntry.prototype._createKeyWithBranch = function () {
   this.directKey = [
     'frontend:',
     this.opts.exposedPort, '.',
