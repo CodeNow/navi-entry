@@ -36,7 +36,7 @@ module.exports = NaviEntry;
  * @param  {String}    [opts.masterPod]    whether instance is a masterPod
  *                                           will override instance value if both are provided
  *                                           defaults to false
- * @return {RedisList} hipache host        redis list
+ * @return {RedisList} hipache host   redis list
  */
 function NaviEntry (optsOrKey) {
   var key, opts;
@@ -49,8 +49,6 @@ function NaviEntry (optsOrKey) {
 
   if (opts) {
     this.opts = opts;
-    // TODO: remove staging hardcode
-    this.opts.env = this.opts.env || 'staging';
     formatOpts(opts);
 
     // the new user domain is active. use the new domain scheme
@@ -97,22 +95,24 @@ NaviEntry.createFromUrl = function (uri) {
  * @param  {Object}    this.opts   options is required
  */
 NaviEntry.prototype._createKeys = function () {
-  // always create a key with no branch name
-  // non-master will have branch in instanceName
-  // master uses this as elastic
-  this._createKeyNoBranch();
-
-  if (this.opts.branch &&
-      this.opts.masterPod) {
-    // for masterpods with repos also create key with repo branch
-    this._createKeyWithBranch();
+  if (this.opts.masterPod) { // master w/ repo, ex: api master
+    if (this.opts.branch) {
+      this._createElasticKey();
+      this._createDirectKey();
+    }
+    else { // masterPod w/out repo, ex: mongo
+      this._createElasticKey();
+    }
+  }
+  else { // direct, ex: auto launch
+    this._createDirectKey();
   }
 };
 
 /**
  * Create redis elastic key from opts, sets this.elasticKey
  */
-NaviEntry.prototype._createKeyNoBranch = function () {
+NaviEntry.prototype._createElasticKey = function () {
   this.elasticKey = [
     'frontend:',
     this.opts.exposedPort, '.',
@@ -125,7 +125,7 @@ NaviEntry.prototype._createKeyNoBranch = function () {
 /**
  * Create redis direct key from opts, sets this.directKey
  */
-NaviEntry.prototype._createKeyWithBranch = function () {
+NaviEntry.prototype._createDirectKey = function () {
   this.directKey = [
     'frontend:',
     this.opts.exposedPort, '.',
@@ -146,7 +146,7 @@ NaviEntry.setRedisClient = function (redisClient) {
 
 /**
  * sets the navi entry list values
- * @param {String} backendUrl should be a full url: protocol and port, ex: http://10.0.1.1:80
+ * @param {String} backendUrl should be a full url including protocol and port, ex: http://10.0.1.1:80
  * @param {Function} cb callback
  */
 NaviEntry.prototype.setBackend = function (backendUrl, cb) {
