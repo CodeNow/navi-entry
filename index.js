@@ -58,14 +58,8 @@ function NaviEntry (optsOrKey) {
     formatOpts(opts);
     requireOpt(opts, 'exposedPort');
 
-    var exposedPort       = opts.exposedPort;
-    var instanceName      = opts.instanceName;
-    var branch            = opts.branch;
-    var masterPod         = opts.masterPod;
-    var ownerUsername     = opts.ownerUsername;
-    var userContentDomain = opts.userContentDomain;
+    opts.exposedPort = opts.exposedPort.split('/')[0];
 
-    exposedPort = exposedPort.split('/')[0];
     // the new user domain is active. use the new domain scheme
     this._createKeys(opts);
   }
