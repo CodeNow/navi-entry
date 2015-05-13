@@ -24,13 +24,11 @@ var formatOpts = function (opts) {
   var instanceBranchKeypath = 'contextVersion.appCodeVersions[0].lowerBranch';
   defaults(opts, {
     instanceName: instance.name,
-    branch      : keypather.get(instance, instanceBranchKeypath),
     masterPod   : instance.masterPod || false
   });
   requireOpt(opts, 'ownerUsername');
   requireOpt(opts, 'instanceName', 'instance.name');
   requireOpt(opts, 'masterPod', 'instance.masterPod');
-  requireOpt(opts, 'branch', 'instance.'+instanceBranchKeypath);
   requireOpt(opts, 'userContentDomain');
 };
 
@@ -138,8 +136,10 @@ NaviEntry.createFromUrl = function (uri) {
  */
 NaviEntry.createHostname = function (opts) {
   formatOpts(opts);
+  // if branch, add -, else keep null
+  var branch = branch ? branch + '-' : null;
   return [
-    opts.branch, '-', opts.instanceName, '-staging-', opts.ownerUsername, '.',
+    branch, opts.instanceName, '-staging-', opts.ownerUsername, '.',
     opts.userContentDomain
   ].join('').toLowerCase();
 };
@@ -153,27 +153,6 @@ NaviEntry.setRedisClient = function (redisClient) {
 };
 
 /**
- * finds instance name for hostname
- * @param  {String}   hostname  instance hostname (no protocol, no port)
- * @param  {Function} cb        callback(err, instanceName)
- */
-NaviEntry.findInstanceNameForHostname = function (hostname, cb) {
-  var redisClient = NaviEntry.prototype.redisClient;
-  if (!redisClient) {
-    throw new Error('redis client was not provided');
-  }
-
-  redisClient.keys('frontend:*.'+hostname, function (err, keys) {
-    if (err) { return cb(err); }
-    if (keys.length === 0) {
-      return cb(ErrorCat.create(404, 'hostname not found'));
-    }
-    var naviEntry = new RedisList(keys[0]);
-    naviEntry.lindex(0, cb);
-  });
-};
-
-/**
  * sets the navi entry list values
  * @param {String} backendUrl should be a full url including protocol and port, ex: http://10.0.1.1:80
  * @param {Function} cb callback
@@ -184,7 +163,8 @@ NaviEntry.prototype.setBackend = function (backendUrl, cb) {
   }
   var task = this.redisClient.multi();
 
-  if (this.opts.masterPod) {
+  // should create elastic if a masterPod or if there is no branch
+  if (this.opts.masterPod || !this.opts.branch) {
     var elasticKey = this.elasticKey;
     // direct url for masterPod:true
     task
@@ -192,11 +172,14 @@ NaviEntry.prototype.setBackend = function (backendUrl, cb) {
       .rpush(elasticKey, this.opts.instanceName)
       .rpush(elasticKey, backendUrl);
   }
-  // direct url (masterPod:false) or elastic url (masterPod:true)
-  task
-    .del(this.key)
-    .rpush(this.key, this.opts.instanceName)
-    .rpush(this.key, backendUrl);
+  // should create direct only if there is a branch
+  if (this.opts.branch) {
+    // direct url (masterPod:false) or elastic url (masterPod:true)
+    task
+      .del(this.key)
+      .rpush(this.key, this.opts.instanceName)
+      .rpush(this.key, backendUrl);
+  }
   task.exec(cb);
 };
 

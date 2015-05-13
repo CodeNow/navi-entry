@@ -13,12 +13,6 @@ var opts = {
   ownerUsername: 'ownerUsername',
   userContentDomain: 'runnableapp.com'
 };
-var naviEntry = new NaviEntry(opts);
 
-// -OR-
-
-var opts = {
-  instance: {/* instanceJSON.. */}
-};
 var naviEntry = new NaviEntry(opts);
 ```
