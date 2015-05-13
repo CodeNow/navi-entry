@@ -3,14 +3,10 @@
 var url = require('url');
 var redisTypes = require('redis-types');
 var RedisList  = redisTypes.List;
-var ErrorCat = require('error-cat');
-var last = require('101/last');
 var exists = require('101/exists');
-var defaults = require('101/defaults');
 var isString = require('101/is-string');
 var isFunction = require('101/is-function');
-var keypather = require('keypather')();
-var requireOpt = function (opts, key, instanceKeypath) {
+var requireOpt = function (opts, key) {
   if (!exists(opts[key])) {
     var message = 'opts.' + key + ' is required';
     throw new Error(message);
@@ -21,6 +17,8 @@ var formatOpts = function (opts) {
   requireOpt(opts, 'instanceName');
   requireOpt(opts, 'masterPod');
   requireOpt(opts, 'userContentDomain');
+  requireOpt(opts, 'exposedPort');
+  opts.exposedPort = opts.exposedPort.split('/')[0];
 };
 
 module.exports = NaviEntry;
@@ -45,7 +43,6 @@ module.exports = NaviEntry;
  */
 function NaviEntry (optsOrKey) {
   var key, opts;
-  var args = arguments;
   if (isString(optsOrKey)) {
     key = optsOrKey;
   }
@@ -56,9 +53,6 @@ function NaviEntry (optsOrKey) {
   if (opts) {
     this.opts = opts;
     formatOpts(opts);
-    requireOpt(opts, 'exposedPort');
-
-    opts.exposedPort = opts.exposedPort.split('/')[0];
 
     // the new user domain is active. use the new domain scheme
     this._createKeys(opts);
@@ -210,7 +204,6 @@ NaviEntry.prototype.del = function (cb) {
  * @param {String} instanceName instance name in redis
  */
 NaviEntry.prototype.getInstanceName = function (cb) {
-  var self = this;
   return this.lindex(0, cb);
 };
 
@@ -220,7 +213,7 @@ NaviEntry.prototype.getInstanceName = function (cb) {
  * @param   {String} [branch]  branch that instance is for
  * @return  {String} elasticHostname
  */
-NaviEntry.prototype.getElasticHostname = function (branch, cb) {
+NaviEntry.prototype.getElasticHostname = function (branch) {
   branch = this._validateBranch(branch);
   var elasticRe = new RegExp('^frontend:[0-9]+[.]');
   var directRe = new RegExp('^frontend:[0-9]+[.]'+branch+'-');
@@ -235,7 +228,7 @@ NaviEntry.prototype.getElasticHostname = function (branch, cb) {
  * @param   {String} [branch]  branch that instance is for
  * @return  {String} elasticHostname
  */
-NaviEntry.prototype.getDirectHostname = function (branch, cb) {
+NaviEntry.prototype.getDirectHostname = function (branch) {
   branch = this._validateBranch(branch);
   var re = new RegExp('^frontend:[0-9]+[.]');
   return this.elasticKey ?
@@ -249,9 +242,6 @@ NaviEntry.prototype.getDirectHostname = function (branch, cb) {
  * @param   {String} [branch]  branch that instance is for
  */
 NaviEntry.prototype._validateBranch = function (branch) {
-  if (isFunction(branch)) {
-    branch = null;
-  }
   branch = branch || this.opts.branch;
   if (!branch) {
     throw new Error('branch or opts.branch is required');
