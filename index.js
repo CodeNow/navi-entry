@@ -21,6 +21,7 @@ var formatOpts = function (opts) {
   requireOpt(opts, 'instanceName');
   requireOpt(opts, 'masterPod');
   requireOpt(opts, 'userContentDomain');
+  requireOpt(opts, 'exposedPort');
 };
 
 module.exports = NaviEntry;
@@ -55,8 +56,9 @@ function NaviEntry (optsOrKey) {
 
   if (opts) {
     this.opts = opts;
+    // TODO: remove staging hardcode
+    this.opts.env = this.opts.env || 'staging';
     formatOpts(opts);
-    requireOpt(opts, 'exposedPort');
 
     opts.exposedPort = opts.exposedPort.split('/')[0];
 
@@ -125,7 +127,9 @@ NaviEntry.prototype._createElasticKey = function () {
   this.elasticKey = [
     'frontend:',
     this.opts.exposedPort, '.',
-    this.opts.instanceName
+    this.opts.instanceName, '-',
+    this.opts.env, '-',
+    this.opts.userContentDomain
   ].join('').toLowerCase();
 };
 
@@ -137,7 +141,9 @@ NaviEntry.prototype._createDirectKey = function () {
     'frontend:',
     this.opts.exposedPort, '.',
     this.opts.branch, '-',
-    this.opts.instanceName
+    this.opts.instanceName, '-',
+    this.opts.env, '-',
+    this.opts.userContentDomain
   ].join('').toLowerCase();
 };
 
