@@ -121,7 +121,7 @@ NaviEntry.prototype._createKeyNoBranch = function () {
     this.opts.exposedPort, '.',
     this.opts.instanceName, '-',
     this.opts.env, '-',
-    this.opts.ownerUsername, '-',
+    this.opts.ownerUsername, '.',
     this.opts.userContentDomain
   ].join('').toLowerCase();
 };
@@ -136,7 +136,7 @@ NaviEntry.prototype._createKeyWithBranch = function () {
     this.opts.branch, '-',
     this.opts.instanceName, '-',
     this.opts.env, '-',
-    this.opts.ownerUsername, '-',
+    this.opts.ownerUsername, '.',
     this.opts.userContentDomain
   ].join('').toLowerCase();
 };
