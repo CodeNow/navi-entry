@@ -231,6 +231,8 @@ NaviEntry.prototype.getElasticHostname = function (branch) {
   }
   var elasticRe = new RegExp('^frontend:[0-9]+[.]');
   var directRe = new RegExp('^frontend:[0-9]+[.]'+branch+'-');
+  console.log(this.elasticKey && this.elasticKey.replace(elasticRe, ''));
+  console.log(!this.elasticKey && this.directKey.replace(directRe, ''));
   return this.elasticKey ?
     this.elasticKey.replace(elasticRe, ''):
     this.directKey.replace(directRe, '');

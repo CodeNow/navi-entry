@@ -35,6 +35,7 @@ describe('NaviEntry', function () {
     done();
   });
   afterEach(function (done) {
+    // reset redis-types (and navi-entry) to not having a client
     delete redisTypes.Key.prototype.redisClient;
     done();
   });
