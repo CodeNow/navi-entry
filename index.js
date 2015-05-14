@@ -4,6 +4,7 @@ var url = require('url');
 var redisTypes = require('redis-types');
 var RedisList  = redisTypes.List;
 var exists = require('101/exists');
+var put = require('101/put');
 var isString = require('101/is-string');
 var requireOpt = function (opts, key) {
   if (!exists(opts[key])) {
@@ -171,13 +172,17 @@ NaviEntry.prototype.setBackend = function (backendUrl, cb) {
     // direct url for masterPod:true
     task
       .del(elasticKey)
-      .rpush(elasticKey, this.opts.instanceName)
+      .rpush(elasticKey,
+        JSON.stringify(put(this.opts, 'elastic', true))
+      )
       .rpush(elasticKey, backendUrl);
   }
   if (directKey) {
     task
       .del(directKey)
-      .rpush(directKey, this.opts.instanceName)
+      .rpush(directKey,
+        JSON.stringify(put(this.opts, 'direct', true))
+      )
       .rpush(directKey, backendUrl);
   }
 
@@ -207,7 +212,8 @@ NaviEntry.prototype.del = function (cb) {
 };
 
 /**
- * get the instance name from the navi entry list
+ * get the instance and url info from the navi entry list
+ * Note: only use this when specifying the redis key directly
  * @param  {getInstanceNameCb} cb
  */
 /**
@@ -215,9 +221,20 @@ NaviEntry.prototype.del = function (cb) {
  * @param {Error}  err
  * @param {String} instanceName instance name in redis
  */
-NaviEntry.prototype.getInstanceName = function (cb) {
-  return this.lindex(0, cb);
+NaviEntry.prototype.getInfo = function (cb) {
+  return this.lindex(0, function (err, jsonStr) {
+    if (err) { return cb(err); }
+    jsonParse(jsonStr, cb);
+  });
 };
+function jsonParse (str, cb) {
+  try {
+    cb(null, JSON.parse(str));
+  }
+  catch (err) {
+    cb(err);
+  }
+}
 
 /**
  * get the elastic url associated with the naviEntry
@@ -231,8 +248,6 @@ NaviEntry.prototype.getElasticHostname = function (branch) {
   }
   var elasticRe = new RegExp('^frontend:[0-9]+[.]');
   var directRe = new RegExp('^frontend:[0-9]+[.]'+branch+'-');
-  console.log(this.elasticKey && this.elasticKey.replace(elasticRe, ''));
-  console.log(!this.elasticKey && this.directKey.replace(directRe, ''));
   return this.elasticKey ?
     this.elasticKey.replace(elasticRe, ''):
     this.directKey.replace(directRe, '');

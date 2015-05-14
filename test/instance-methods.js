@@ -7,8 +7,10 @@ var describe = lab.describe;
 var it = lab.test;
 var beforeEach = lab.beforeEach;
 var afterEach = lab.afterEach;
+var sinon = require('sinon');
 
 var noop = require('101/noop');
+var put = require('101/put');
 var redis = require('redis');
 var createCount = require('callback-count');
 
@@ -65,7 +67,10 @@ describe('NaviEntry instance methods', function () {
           naviEntry.setBackend(backendUrl, function (err) {
             if (err) { return done(err); }
 
-            expectListAtKey(naviEntry.directKey, [ctx.opts.instanceName, backendUrl], done);
+            expectListAtKey(naviEntry.directKey, [
+              put(ctx.opts, 'direct', true),
+              backendUrl
+            ], done);
           });
         });
       });
@@ -84,10 +89,14 @@ describe('NaviEntry instance methods', function () {
             if (err) { return done(err); }
 
             var count = createCount(done);
-            expectListAtKey(naviEntry.directKey,
-              [ctx.opts.instanceName, backendUrl], count.inc().next);
-            expectListAtKey(naviEntry.elasticKey,
-              [ctx.opts.instanceName, backendUrl], count.inc().next);
+            expectListAtKey(naviEntry.directKey, [
+              put(ctx.opts, 'direct', true),
+              backendUrl
+            ], count.inc().next);
+            expectListAtKey(naviEntry.elasticKey, [
+              put(ctx.opts, 'elastic', true),
+              backendUrl
+            ], count.inc().next);
           });
         });
 
@@ -105,8 +114,10 @@ describe('NaviEntry instance methods', function () {
               if (err) { return done(err); }
 
               var count = createCount(done);
-              expectListAtKey(naviEntry.elasticKey,
-                [ctx.opts.instanceName, backendUrl], count.inc().next);
+              expectListAtKey(naviEntry.elasticKey, [
+                put(ctx.opts, 'elastic', true),
+                backendUrl
+              ], count.inc().next);
             });
           });
         });
@@ -135,6 +146,7 @@ describe('NaviEntry instance methods', function () {
       function expectListAtKey (key, list, done) {
         new RedisList(key).lrange(0, -1, function (err, data) {
           if (err) { return done(err); }
+          list[0] = JSON.stringify(list[0]);
           expect(data).to.deep.equal(list);
           done();
         });
@@ -262,15 +274,48 @@ describe('NaviEntry instance methods', function () {
         ctx.naviEntry.del(done);
       });
 
-      describe('getInstanceName', function () {
+      describe('getInfo', function () {
+        beforeEach(function (done) {
+          var host = ctx.naviEntry.getDirectHostname()+':'+ctx.opts.exposedPort;
+          ctx.naviEntry2 = NaviEntry.createFromHost(host);
+          done();
+        });
 
-        it('get the instance name', function (done) {
-
-          var naviEntry = ctx.naviEntry;
-          naviEntry.getInstanceName(function (err, name) {
+        it('should get info', function (done) {
+          ctx.naviEntry2.getInfo(function (err, info) {
             if (err) { return done(err); }
-            expect(name).to.equal(ctx.opts.instanceName);
+            expect(info).to.deep.equal(
+              put(ctx.opts, 'direct', true)
+            );
             done();
+          });
+        });
+
+        describe('lindex error', function () {
+          beforeEach(function (done) {
+            ctx.err = new Error('boom');
+            sinon.stub(ctx.naviEntry2, 'lindex').yieldsAsync(ctx.err);
+            done();
+          });
+
+          it('should callback the error', function (done) {
+            ctx.naviEntry2.getInfo(function (err) {
+              expect(err).to.equal(ctx.err);
+              done();
+            });
+          });
+        });
+
+        describe('malformated info', function () {
+          it('should callback parse error', function (done) {
+            ctx.naviEntry2.lset(0, 'not json', function (err) {
+              if (err) { return done(err); }
+              ctx.naviEntry2.getInfo(function (err) {
+                expect(err).to.exist();
+                expect(err.message).to.match(/Unexpected/);
+                done();
+              });
+            });
           });
         });
       });
