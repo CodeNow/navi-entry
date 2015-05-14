@@ -59,7 +59,8 @@ describe('NaviEntry', function () {
           createNaviEntry.bind(null, {
             exposedPort: '80',
             instanceName: 'instanceName',
-            ownerUsername: 'ownerUsername'
+            ownerUsername: 'ownerUsername',
+            ownerGithub: 101
           })
         ).to.throw();
         expect(
@@ -68,6 +69,7 @@ describe('NaviEntry', function () {
             branch:       'branch',
             instanceName: 'instanceName',
             ownerUsername: 'ownerUsername',
+            ownerGithub: 101,
             userContentDomain: 'runnableapp.com'
           })
         ).to.throw(Error, /masterPod/);
@@ -82,6 +84,7 @@ describe('NaviEntry', function () {
             branch:       'branch',
             instanceName: 'instanceName',
             ownerUsername: 'ownerUsername',
+            ownerGithub: 101,
             userContentDomain: 'runnableapp.com',
             masterPod: true
           })
@@ -98,6 +101,7 @@ describe('NaviEntry', function () {
           exposedPort: '80',
           branch:       'branch',
           ownerUsername: 'ownerUsername',
+          ownerGithub: 101,
           userContentDomain: 'runnableapp.com',
           instanceName: 'instanceName'
         };
@@ -203,6 +207,7 @@ describe('NaviEntry', function () {
         exposedPort: '80',
         branch:       'branch',
         ownerUsername: 'ownerUsername',
+        ownerGithub: 101,
         userContentDomain: 'runnableapp.com',
         masterPod: true,
         instanceName: 'instanceName'

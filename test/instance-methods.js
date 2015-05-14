@@ -44,6 +44,7 @@ describe('NaviEntry instance methods', function () {
           exposedPort: '80',
           branch:       'branch',
           ownerUsername: 'ownerUsername',
+          ownerGithub: 101,
           userContentDomain: 'runnableapp.com',
           instanceName: 'instanceName'
         };
@@ -130,6 +131,7 @@ describe('NaviEntry instance methods', function () {
             exposedPort:  '80',
             branch:       'branch',
             ownerUsername: 'ownerUsername',
+            ownerGithub: 101,
             userContentDomain: 'runnableapp.com',
             masterPod: true,
             instanceName: 'instanceName'
@@ -160,6 +162,7 @@ describe('NaviEntry instance methods', function () {
           exposedPort: '80',
           branch:       'branch',
           ownerUsername: 'ownerUsername',
+          ownerGithub: 101,
           userContentDomain: 'runnableapp.com',
           instanceName: 'instanceName'
         };
@@ -228,6 +231,7 @@ describe('NaviEntry instance methods', function () {
             exposedPort:  '80',
             branch:       'branch',
             ownerUsername: 'ownerUsername',
+            ownerGithub: 101,
             userContentDomain: 'runnableapp.com',
             masterPod: true,
             instanceName: 'instanceName'
@@ -263,6 +267,7 @@ describe('NaviEntry instance methods', function () {
           // instanceName includes branch, masterPod:false
           instanceName: 'branch-instanceName',
           ownerUsername: 'ownerUsername',
+          ownerGithub: 101,
           userContentDomain: 'runnableapp.com',
           masterPod: false
         };
@@ -335,6 +340,7 @@ describe('NaviEntry instance methods', function () {
               branch:       'branch',
               instanceName: 'instanceName',
               ownerUsername: 'ownerUsername',
+              ownerGithub: 101,
               userContentDomain: 'runnableapp.com',
               masterPod: true
             };
