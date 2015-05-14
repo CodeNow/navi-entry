@@ -155,7 +155,8 @@ NaviEntry.setRedisClient = function (redisClient) {
 
 /**
  * sets the navi entry list values
- * @param {String} backendUrl should be a full url including protocol and port, ex: http://10.0.1.1:80
+ * @param {String} backendUrl should be a full url including protocol and port
+ *                              ex: http://10.0.1.1:80
  * @param {Function} cb callback
  */
 NaviEntry.prototype.setBackend = function (backendUrl, cb) {

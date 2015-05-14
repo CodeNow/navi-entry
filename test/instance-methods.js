@@ -84,8 +84,10 @@ describe('NaviEntry instance methods', function () {
             if (err) { return done(err); }
 
             var count = createCount(done);
-            expectListAtKey(naviEntry.directKey, [ctx.opts.instanceName, backendUrl], count.inc().next);
-            expectListAtKey(naviEntry.elasticKey, [ctx.opts.instanceName, backendUrl], count.inc().next);
+            expectListAtKey(naviEntry.directKey,
+              [ctx.opts.instanceName, backendUrl], count.inc().next);
+            expectListAtKey(naviEntry.elasticKey,
+              [ctx.opts.instanceName, backendUrl], count.inc().next);
           });
         });
 
@@ -103,7 +105,8 @@ describe('NaviEntry instance methods', function () {
               if (err) { return done(err); }
 
               var count = createCount(done);
-              expectListAtKey(naviEntry.elasticKey, [ctx.opts.instanceName, backendUrl], count.inc().next);
+              expectListAtKey(naviEntry.elasticKey,
+                [ctx.opts.instanceName, backendUrl], count.inc().next);
             });
           });
         });
@@ -313,7 +316,7 @@ describe('NaviEntry instance methods', function () {
           done();
         });
 
-        describe('no branch', function (done) {
+        describe('no branch', function () {
           it('should stuff', function (done) {
             var host = ctx.naviEntry.getElasticHostname()+':'+ctx.opts.exposedPort;
             var naviEntry2 = NaviEntry.createFromHost(host);

@@ -7,7 +7,6 @@ var describe = lab.describe;
 var it = lab.test;
 var beforeEach = lab.beforeEach;
 var afterEach = lab.afterEach;
-var sinon = require('sinon');
 
 var redis = require('redis');
 var redisTypes = require('redis-types');
@@ -16,16 +15,16 @@ var NaviEntry = require('../index.js');
 function createNaviEntry () {
   var args = arguments;
   if (args.length === 1) {
-    new NaviEntry(args[0]);
+    return new NaviEntry(args[0]);
   }
   else if (args.length === 2) {
-    new NaviEntry(args[0], args[1], args[2]);
+    return new NaviEntry(args[0], args[1], args[2]);
   }
   else if (args.length === 3) {
-    new NaviEntry(args[0], args[1], args[2]);
+    return new NaviEntry(args[0], args[1], args[2]);
   }
   else {
-    new NaviEntry(args[0], args[1], args[2], args[3]);
+    return new NaviEntry(args[0], args[1], args[2], args[3]);
   }
 }
 
