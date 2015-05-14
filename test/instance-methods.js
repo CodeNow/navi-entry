@@ -44,7 +44,7 @@ describe('NaviEntry instance methods', function () {
           exposedPort: '80',
           branch:       'branch',
           ownerUsername: 'ownerUsername',
-          ownerId: 101,
+          ownerGithub: 101,
           userContentDomain: 'runnableapp.com',
           instanceName: 'instanceName'
         };
@@ -131,7 +131,7 @@ describe('NaviEntry instance methods', function () {
             exposedPort:  '80',
             branch:       'branch',
             ownerUsername: 'ownerUsername',
-            ownerId: 101,
+            ownerGithub: 101,
             userContentDomain: 'runnableapp.com',
             masterPod: true,
             instanceName: 'instanceName'
@@ -162,7 +162,7 @@ describe('NaviEntry instance methods', function () {
           exposedPort: '80',
           branch:       'branch',
           ownerUsername: 'ownerUsername',
-          ownerId: 101,
+          ownerGithub: 101,
           userContentDomain: 'runnableapp.com',
           instanceName: 'instanceName'
         };
@@ -231,7 +231,7 @@ describe('NaviEntry instance methods', function () {
             exposedPort:  '80',
             branch:       'branch',
             ownerUsername: 'ownerUsername',
-            ownerId: 101,
+            ownerGithub: 101,
             userContentDomain: 'runnableapp.com',
             masterPod: true,
             instanceName: 'instanceName'
@@ -267,7 +267,7 @@ describe('NaviEntry instance methods', function () {
           // instanceName includes branch, masterPod:false
           instanceName: 'branch-instanceName',
           ownerUsername: 'ownerUsername',
-          ownerId: 101,
+          ownerGithub: 101,
           userContentDomain: 'runnableapp.com',
           masterPod: false
         };
@@ -340,7 +340,7 @@ describe('NaviEntry instance methods', function () {
               branch:       'branch',
               instanceName: 'instanceName',
               ownerUsername: 'ownerUsername',
-              ownerId: 101,
+              ownerGithub: 101,
               userContentDomain: 'runnableapp.com',
               masterPod: true
             };

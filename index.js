@@ -14,7 +14,7 @@ var requireOpt = function (opts, key) {
 };
 var formatOpts = function (opts) {
   requireOpt(opts, 'ownerUsername');
-  requireOpt(opts, 'ownerId');
+  requireOpt(opts, 'ownerGithub');
   requireOpt(opts, 'instanceName');
   requireOpt(opts, 'masterPod');
   requireOpt(opts, 'userContentDomain');
