@@ -204,9 +204,9 @@ describe('NaviEntry', function () {
             'frontend:',
             opts.exposedPort, '.',
             opts.shortHash, '-',
-            repoName.slice(0, 18), '-',
-            'staging'.slice(0, 18), '-',
-            opts.ownerUsername.slice(0, 18), '.',
+            repoName, '-',
+            'staging', '-',
+            opts.ownerUsername, '.',
             opts.userContentDomain
           ].join('').toLowerCase());
         expect(naviEntry.opts.exposedPort).to.equal(opts.exposedPort);

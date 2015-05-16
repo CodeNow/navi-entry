@@ -6,6 +6,7 @@ var RedisList  = redisTypes.List;
 var exists = require('101/exists');
 var put = require('101/put');
 var isString = require('101/is-string');
+var runnableHostname = require('runnable-hostname');
 var requireOpt = function (opts, key) {
   if (!exists(opts[key])) {
     var message = 'opts.' + key + ' is required';
@@ -118,11 +119,7 @@ NaviEntry.prototype._createKeys = function () {
  */
 NaviEntry.prototype._createElasticKey = function () {
   this.elasticKey = [
-    'frontend:',
-    this.opts.exposedPort, '.',
-    this.opts.instanceName,
-    '-staging-', this.opts.ownerUsername, '.',
-    this.opts.userContentDomain
+    'frontend:', this.opts.exposedPort, '.', runnableHostname.elastic(this.opts)
   ].join('').toLowerCase();
 };
 
@@ -130,25 +127,8 @@ NaviEntry.prototype._createElasticKey = function () {
  * Create redis direct key from opts, sets this.directKey
  */
 NaviEntry.prototype._createDirectKey = function () {
-  // [6 char hash] -
-  // [first 18 char of repo name] -
-  // [first 18 char of sandbox name] -
-  // [first 18 char of orgname].runnableapp.com
-  // Length: 6+1+18+1+18+1+18 = 63
-  var repoName = this.opts.masterPod ?
-    this.opts.instanceName :
-    this.opts.instanceName   // non-masterPod instance name already includes branch
-      .toLowerCase()
-      .replace(this.opts.branch.toLowerCase()+'-', '');
-  var sandboxName = 'staging';
   this.directKey = [
-    'frontend:',
-    this.opts.exposedPort, '.',
-    this.opts.shortHash, '-',
-    repoName.slice(0, 18), '-',
-    sandboxName.slice(0, 18), '-',
-    this.opts.ownerUsername.slice(0, 18),
-    '.', this.opts.userContentDomain
+    'frontend:', this.opts.exposedPort, '.', runnableHostname.direct(this.opts)
   ].join('').toLowerCase();
 };
 
@@ -252,8 +232,8 @@ NaviEntry.prototype.getElasticHostname = function (shortHash) {
   if (!this.elasticKey) {
     shortHash = this._validateShortHash(shortHash);
   }
-  var elasticRe = new RegExp('^frontend:[0-9]+[.]');
-  var directRe = new RegExp('^frontend:[0-9]+[.]'+shortHash+'-');
+  var elasticRe = new RegExp('^frontend:[0-9]+[.]', 'i');
+  var directRe = new RegExp('^frontend:[0-9]+[.]'+shortHash+'-', 'i');
   return this.elasticKey ?
     this.elasticKey.replace(elasticRe, ''):
     this.directKey.replace(directRe, '');
@@ -267,7 +247,7 @@ NaviEntry.prototype.getElasticHostname = function (shortHash) {
  */
 NaviEntry.prototype.getDirectHostname = function (shortHash) {
   shortHash = this._validateShortHash(shortHash);
-  var re = new RegExp('^frontend:[0-9]+[.]');
+  var re = new RegExp('^frontend:[0-9]+[.]', 'i');
   return this.elasticKey ?
     this.elasticKey.replace(re, shortHash+'-'):
     this.directKey.replace(re, '');
