@@ -42,6 +42,7 @@ describe('NaviEntry instance methods', function () {
         NaviEntry.setRedisClient(redis.createClient());
         ctx.opts = {
           exposedPort: '80',
+          shortHash:    'abcdef',
           branch:       'branch',
           ownerUsername: 'ownerUsername',
           ownerGithub: 101,
@@ -126,9 +127,10 @@ describe('NaviEntry instance methods', function () {
 
       describe('errors', function () {
 
-        it('should callback error if opts where not set', function (done) {
+        it('should callback error if opts were not set', function (done) {
           var opts = {
             exposedPort:  '80',
+            shortHash:    'abcdef',
             branch:       'branch',
             ownerUsername: 'ownerUsername',
             ownerGithub: 101,
@@ -160,6 +162,7 @@ describe('NaviEntry instance methods', function () {
         NaviEntry.setRedisClient(redis.createClient());
         ctx.opts = {
           exposedPort: '80',
+          shortHash:    'abcdef',
           branch:       'branch',
           ownerUsername: 'ownerUsername',
           ownerGithub: 101,
@@ -226,9 +229,10 @@ describe('NaviEntry instance methods', function () {
 
       describe('errors', function () {
 
-        it('should callback error if opts where not set', function (done) {
+        it('should callback error if opts were not set', function (done) {
           var opts = {
             exposedPort:  '80',
+            shortHash:    'abcdef',
             branch:       'branch',
             ownerUsername: 'ownerUsername',
             ownerGithub: 101,
@@ -263,6 +267,7 @@ describe('NaviEntry instance methods', function () {
       beforeEach(function (done) {
         var opts = ctx.opts = {
           exposedPort:  '80',
+          shortHash:    'abcdef',
           branch:       'branch',
           // instanceName includes branch, masterPod:false
           instanceName: 'branch-instanceName',
@@ -327,8 +332,8 @@ describe('NaviEntry instance methods', function () {
 
       describe('getElasticHostname', function () {
 
-        it('should do remove the branch from the hostname', function (done) {
-          var hostname = ctx.naviEntry.getElasticHostname(ctx.opts.branch);
+        it('should do remove the shortHash from the hostname', function (done) {
+          var hostname = ctx.naviEntry.getElasticHostname(ctx.opts.shortHash);
           expect(hostname).to.equal('instancename-staging-ownerusername.runnableapp.com');
           done();
         });
@@ -337,6 +342,7 @@ describe('NaviEntry instance methods', function () {
           beforeEach(function (done) {
             var opts = ctx.opts = {
               exposedPort:  '80',
+              shortHash:    'abcdef',
               branch:       'branch',
               instanceName: 'instanceName',
               ownerUsername: 'ownerUsername',
@@ -344,16 +350,16 @@ describe('NaviEntry instance methods', function () {
               userContentDomain: 'runnableapp.com',
               masterPod: true
             };
-            var naviEntry = ctx.naviEntry2 = new NaviEntry(opts);
+            ctx.naviEntry2 = new NaviEntry(opts);
             var backendUrl = 'http://10.0.0.1:4000';
-            naviEntry.setBackend(backendUrl, done);
+            ctx.naviEntry2.setBackend(backendUrl, done);
           });
           afterEach(function (done) {
             ctx.naviEntry2.del(done);
           });
 
-          it('should do remove the branch from the hostname', function (done) {
-            var hostname = ctx.naviEntry.getElasticHostname(ctx.opts.branch);
+          it('should remove the shortHash from the hostname', function (done) {
+            var hostname = ctx.naviEntry2.getElasticHostname(ctx.opts.branch);
             expect(hostname).to.equal('instancename-staging-ownerusername.runnableapp.com');
             done();
           });
@@ -361,9 +367,9 @@ describe('NaviEntry instance methods', function () {
       });
 
       describe('getDirectHostname', function () {
-        it('should do remove the branch from the hostname', function (done) {
+        it('should have the shortHash hostname', function (done) {
           var hostname = ctx.naviEntry.getDirectHostname(ctx.opts.branch);
-          expect(hostname).to.equal('branch-instancename-staging-ownerusername.runnableapp.com');
+          expect(hostname).to.equal('abcdef-instancename-staging-ownerusername.runnableapp.com');
           done();
         });
 

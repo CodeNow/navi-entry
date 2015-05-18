@@ -6,6 +6,7 @@ var RedisList  = redisTypes.List;
 var exists = require('101/exists');
 var put = require('101/put');
 var isString = require('101/is-string');
+var runnableHostname = require('runnable-hostname');
 var requireOpt = function (opts, key) {
   if (!exists(opts[key])) {
     var message = 'opts.' + key + ' is required';
@@ -13,12 +14,13 @@ var requireOpt = function (opts, key) {
   }
 };
 var formatOpts = function (opts) {
-  requireOpt(opts, 'ownerUsername');
-  requireOpt(opts, 'ownerGithub');
-  requireOpt(opts, 'instanceName');
-  requireOpt(opts, 'masterPod');
-  requireOpt(opts, 'userContentDomain');
   requireOpt(opts, 'exposedPort');
+  requireOpt(opts, 'shortHash');
+  requireOpt(opts, 'instanceName');
+  requireOpt(opts, 'ownerUsername');
+  requireOpt(opts, 'userContentDomain');
+  requireOpt(opts, 'masterPod');
+  requireOpt(opts, 'ownerGithub');
   opts.exposedPort = opts.exposedPort.split('/')[0];
 };
 
@@ -117,11 +119,7 @@ NaviEntry.prototype._createKeys = function () {
  */
 NaviEntry.prototype._createElasticKey = function () {
   this.elasticKey = [
-    'frontend:',
-    this.opts.exposedPort, '.',
-    this.opts.instanceName,
-    '-staging-', this.opts.ownerUsername, '.',
-    this.opts.userContentDomain
+    'frontend:', this.opts.exposedPort, '.', runnableHostname.elastic(this.opts)
   ].join('').toLowerCase();
 };
 
@@ -129,22 +127,9 @@ NaviEntry.prototype._createElasticKey = function () {
  * Create redis direct key from opts, sets this.directKey
  */
 NaviEntry.prototype._createDirectKey = function () {
-  this.directKey = this.opts.masterPod ?
-    [
-      'frontend:',
-      this.opts.exposedPort, '.',
-      this.opts.branch, '-',   // masterPod instance name does not include branch
-      this.opts.instanceName,
-      '-staging-', this.opts.ownerUsername, '.',
-      this.opts.userContentDomain
-    ].join('').toLowerCase() :
-    [
-      'frontend:',
-      this.opts.exposedPort, '.',
-      this.opts.instanceName,  // non-masterPod instance name already includes branch
-      '-staging-', this.opts.ownerUsername, '.',
-      this.opts.userContentDomain
-    ].join('').toLowerCase();
+  this.directKey = [
+    'frontend:', this.opts.exposedPort, '.', runnableHostname.direct(this.opts)
+  ].join('').toLowerCase();
 };
 
 /**
@@ -243,12 +228,12 @@ function jsonParse (str, cb) {
  * @param   {String} [branch]  branch that instance is for
  * @return  {String} elasticHostname
  */
-NaviEntry.prototype.getElasticHostname = function (branch) {
+NaviEntry.prototype.getElasticHostname = function (shortHash) {
   if (!this.elasticKey) {
-    branch = this._validateBranch(branch);
+    shortHash = this._validateShortHash(shortHash);
   }
-  var elasticRe = new RegExp('^frontend:[0-9]+[.]');
-  var directRe = new RegExp('^frontend:[0-9]+[.]'+branch+'-');
+  var elasticRe = new RegExp('^frontend:[0-9]+[.]', 'i');
+  var directRe = new RegExp('^frontend:[0-9]+[.]'+shortHash+'-', 'i');
   return this.elasticKey ?
     this.elasticKey.replace(elasticRe, ''):
     this.directKey.replace(directRe, '');
@@ -257,26 +242,26 @@ NaviEntry.prototype.getElasticHostname = function (branch) {
 /**
  * get the elastic url associated with the naviEntry
  * NOTE: should only be used for a naviEntry with a ELASTIC key
- * @param   {String} [branch]  branch that instance is for
+ * @param   {String} [shortHash]  shortHash that instance is for
  * @return  {String} elasticHostname
  */
-NaviEntry.prototype.getDirectHostname = function (branch) {
-  branch = this._validateBranch(branch);
-  var re = new RegExp('^frontend:[0-9]+[.]');
+NaviEntry.prototype.getDirectHostname = function (shortHash) {
+  shortHash = this._validateShortHash(shortHash);
+  var re = new RegExp('^frontend:[0-9]+[.]', 'i');
   return this.elasticKey ?
-    this.elasticKey.replace(re, branch+'-'):
+    this.elasticKey.replace(re, shortHash+'-'):
     this.directKey.replace(re, '');
 };
 
 /**
- * validate branch for get_Hostname functions
+ * validate shortHash for get_Hostname functions
  * NOTE: should only be used for a naviEntry with a ELASTIC key
- * @param   {String} [branch]  branch that instance is for
+ * @param   {String} [shortHash]  shortHash that instance is for
  */
-NaviEntry.prototype._validateBranch = function (branch) {
-  branch = branch || this.opts.branch;
-  if (!branch) {
-    throw new Error('branch or opts.branch is required');
+NaviEntry.prototype._validateShortHash = function (shortHash) {
+  shortHash = shortHash || this.opts.shortHash;
+  if (!shortHash) {
+    throw new Error('shortHash or opts.shortHash is required');
   }
-  return branch;
+  return shortHash;
 };

@@ -47,32 +47,60 @@ describe('NaviEntry', function () {
       it('should error if missing args', function (done) {
         expect(
           createNaviEntry.bind(null, {
-            exposedPort: '80'})
-        ).to.throw();
+            exposedPort: '80'
+          })
+        ).to.throw(/required/);
         expect(
           createNaviEntry.bind(null, {
             exposedPort: '80',
+            shortHash: 'abcdef'
+          })
+        ).to.throw(/required/);
+        expect(
+          createNaviEntry.bind(null, {
+            exposedPort: '80',
+            shortHash: 'abcdef',
             instanceName: 'instanceName'
           })
-        ).to.throw();
+        ).to.throw(/required/);
         expect(
           createNaviEntry.bind(null, {
             exposedPort: '80',
+            shortHash: 'abcdef',
             instanceName: 'instanceName',
-            ownerUsername: 'ownerUsername',
-            ownerGithub: 101
+            ownerUsername: 'ownerUsername'
           })
-        ).to.throw();
+        ).to.throw(/required/);
         expect(
           createNaviEntry.bind(null, {
             exposedPort: '80',
-            branch:       'branch',
+            shortHash: 'abcdef',
             instanceName: 'instanceName',
             ownerUsername: 'ownerUsername',
-            ownerGithub: 101,
             userContentDomain: 'runnableapp.com'
           })
-        ).to.throw(Error, /masterPod/);
+        ).to.throw(/required/);
+        expect(
+          createNaviEntry.bind(null, {
+            exposedPort: '80',
+            shortHash: 'abcdef',
+            instanceName: 'instanceName',
+            ownerUsername: 'ownerUsername',
+            userContentDomain: 'runnableapp.com',
+            masterPod: true
+          })
+        ).to.throw(/required/);
+        expect(
+          createNaviEntry.bind(null, {
+            exposedPort: '80',
+            shortHash: 'abcdef',
+            instanceName: 'instanceName',
+            ownerUsername: 'ownerUsername',
+            userContentDomain: 'runnableapp.com',
+            masterPod: true,
+            ownerGithub: 101
+          })
+        ).to.throw(/redis/);
 
         done();
       });
@@ -82,6 +110,7 @@ describe('NaviEntry', function () {
           createNaviEntry.bind(null, {
             exposedPort: '80',
             branch:       'branch',
+            shortHash: 'abcdef',
             instanceName: 'instanceName',
             ownerUsername: 'ownerUsername',
             ownerGithub: 101,
@@ -99,6 +128,7 @@ describe('NaviEntry', function () {
         NaviEntry.setRedisClient(redis.createClient());
         ctx.opts = {
           exposedPort: '80',
+          shortHash:    'abcdef',
           branch:       'branch',
           ownerUsername: 'ownerUsername',
           ownerGithub: 101,
@@ -165,15 +195,18 @@ describe('NaviEntry', function () {
 
 
       function expectDirectKey (naviEntry, opts) {
-        var branchPart = opts.masterPod ?
-          opts.branch+'-':
-          ''; // non masterPod instances include branch in their name
+        var repoName = opts.masterPod ?
+          opts.instanceName:
+          // non masterPod instances include branch in their name
+          opts.instanceName.replace(opts.branch+'-', '');
         expect(naviEntry.directKey)
           .to.equal([
             'frontend:',
             opts.exposedPort, '.',
-            branchPart,
-            opts.instanceName, '-staging-', opts.ownerUsername, '.',
+            opts.shortHash, '-',
+            repoName, '-',
+            'staging', '-',
+            opts.ownerUsername, '.',
             opts.userContentDomain
           ].join('').toLowerCase());
         expect(naviEntry.opts.exposedPort).to.equal(opts.exposedPort);
@@ -205,6 +238,7 @@ describe('NaviEntry', function () {
       NaviEntry.setRedisClient(redis.createClient());
       var opts = {
         exposedPort: '80',
+        shortHash:    'abcdef',
         branch:       'branch',
         ownerUsername: 'ownerUsername',
         ownerGithub: 101,
