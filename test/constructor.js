@@ -6,12 +6,16 @@ var expect = require('code').expect;
 var describe = lab.describe;
 var it = lab.test;
 var beforeEach = lab.beforeEach;
-var afterEach = lab.afterEach;
+var before = lab.before;
 
+var clone = require('101/clone');
 var redis = require('redis');
-var redisTypes = require('redis-types');
+var sinon = require('sinon');
 
+var redisTypes = require('redis-types');
 var NaviEntry = require('../index.js');
+var redisClient = redis.createClient();
+
 function createNaviEntry () {
   var args = arguments;
   if (args.length === 1) {
@@ -30,13 +34,13 @@ function createNaviEntry () {
 
 describe('NaviEntry', function () {
   var ctx;
-  beforeEach(function (done) {
-    ctx = {};
-    done();
-  });
-  afterEach(function (done) {
+  before(function (done) {
     // reset redis-types (and navi-entry) to not having a client
     delete redisTypes.Key.prototype.redisClient;
+    done();
+  });
+  beforeEach(function (done) {
+    ctx = {};
     done();
   });
 
@@ -125,7 +129,7 @@ describe('NaviEntry', function () {
 
     describe('success', function () {
       beforeEach(function (done) {
-        NaviEntry.setRedisClient(redis.createClient());
+        NaviEntry.setRedisClient(redisClient);
         ctx.opts = {
           exposedPort: '80',
           shortHash:    'abcdef',
@@ -232,35 +236,103 @@ describe('NaviEntry', function () {
     });
 
   });
-
-  describe('createFromHostnameAndPort', function () {
-    it('should create a naviEntry from hostname', function (done) {
-      NaviEntry.setRedisClient(redis.createClient());
-      var opts = {
-        exposedPort: '80',
-        shortHash:    'abcdef',
-        branch:       'branch',
-        ownerUsername: 'ownerUsername',
-        ownerGithub: 101,
-        userContentDomain: 'runnableapp.com',
-        masterPod: true,
-        instanceName: 'instanceName'
-      };
-      var host = new NaviEntry(opts).getDirectHostname();
-      expect(
-        NaviEntry.createFromHost(host).key
-      ).to.equal(
-        new NaviEntry(opts).key
-      );
-
-      expect(
-        NaviEntry.createFromHost(host+':'+opts.exposedPort).key
-      ).to.equal(
-        new NaviEntry(opts).key
-      );
-
+  describe('createFromUrl', function () {
+    before(function(done) {
+      NaviEntry.setRedisClient(redisClient);
       done();
     });
+    it('should create correct entry', function(done) {
+      expect(NaviEntry.createFromUrl('http://hash-repo-staging-codenow.runnableapp.com').key)
+        .to.equal('frontend:80.hash-repo-staging-codenow.runnableapp.com');
+      expect(NaviEntry.createFromUrl('http://repo-staging-codenow.runnableapp.com').key)
+        .to.equal('frontend:80.repo-staging-codenow.runnableapp.com');
+      expect(NaviEntry.createFromUrl('http://hash-repo-staging-codenow.runnableapp.com:542').key)
+        .to.equal('frontend:542.hash-repo-staging-codenow.runnableapp.com');
+      expect(NaviEntry.createFromUrl('http://repo-staging-codenow.runnableapp.com:542').key)
+        .to.equal('frontend:542.repo-staging-codenow.runnableapp.com');
+      done();
+    });
+  });
 
+  describe('createFromHostname', function () {
+    var testEntry;
+    var opts = {
+      exposedPort: '80',
+      shortHash:    'abcdef',
+      branch:       'branch',
+      ownerUsername: 'ownerUsername',
+      ownerGithub: 101,
+      userContentDomain: 'runnableapp.com',
+      masterPod: true,
+      instanceName: 'instanceName'
+    };
+    before(function(done) {
+      NaviEntry.setRedisClient(redisClient);
+      done();
+    });
+    beforeEach(function(done) {
+      testEntry = new NaviEntry(opts);
+      testEntry.setBackend('backend1', done());
+    });
+    beforeEach(function(done) {
+      var opt = clone(opts);
+      opt.exposedPort = '443';
+      var testEntry = new NaviEntry(opt);
+      testEntry.setBackend('backend1', done());
+    });
+    beforeEach(function(done) {
+      var opt = clone(opts);
+      opt.exposedPort = '45678';
+      var testEntry = new NaviEntry(opt);
+      testEntry.setBackend('backend1', done());
+    });
+    beforeEach(function(done) {
+      var opt = clone(opts);
+      opt.branch = 'who';
+      opt.masterPod = false;
+      opt.instanceName = opt.branch + opts.instanceName;
+      var testEntry = new NaviEntry(opt);
+      testEntry.setBackend('backend2', done());
+    });
+    it('should create a naviEntry from hostname for masterPod', function (done) {
+      var host = new NaviEntry(opts).getDirectHostname();
+      NaviEntry.createFromHostname(redisClient, host, function (err, naviEntry) {
+        naviEntry.lindex(1, function (err, backend) {
+          expect(backend).to.equal('backend1');
+          done();
+        });
+      });
+    });
+    it('should create a naviEntry from hostname for non masterPod', function (done) {
+      var opt = clone(opts);
+      opt.branch = 'who';
+      opt.masterPod = false;
+      opt.instanceName = opt.branch + opts.instanceName;
+      var host = new NaviEntry(opt).getDirectHostname();
+      NaviEntry.createFromHostname(redisClient, host, function (err, naviEntry) {
+        naviEntry.lindex(1, function (err, backend) {
+          expect(backend).to.equal('backend2');
+          done();
+        });
+      });
+    });
+    it('should create a error if not found', function (done) {
+      var opt = clone(opts);
+      opt.instanceName = 'fake';
+      var host = new NaviEntry(opt).getDirectHostname();
+      NaviEntry.createFromHostname(redisClient, host, function (err) {
+        expect(err).to.exist();
+        done();
+      });
+    });
+    it('should error if redis call failed', function (done) {
+      var testErr = 'power kick';
+      var hostname = new NaviEntry(opts).getDirectHostname();
+      sinon.stub(redisClient, 'keys').yieldsAsync(testErr);
+      NaviEntry.createFromHostname(redisClient, hostname, function (err) {
+        expect(err).to.equal(testErr);
+        done();
+      });
+    });
   });
 });
