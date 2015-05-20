@@ -7,6 +7,8 @@ var exists = require('101/exists');
 var put = require('101/put');
 var isString = require('101/is-string');
 var runnableHostname = require('runnable-hostname');
+var ErrorCat = require('error-cat');
+
 var requireOpt = function (opts, key) {
   if (!exists(opts[key])) {
     var message = 'opts.' + key + ' is required';
@@ -83,7 +85,7 @@ NaviEntry.createFromHostname = function (client, hostname, cb) {
   client.keys(key, function(err, entries) {
     if (err) { return cb(err); }
     if (entries.length === 0) {
-      return cb(new Error('entry not found'));
+      return cb(ErrorCat.create(404, 'entry not found'));
     }
     // pick first key
     cb(null, new NaviEntry(entries[0]));
