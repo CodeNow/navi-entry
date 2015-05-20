@@ -7,6 +7,8 @@ var exists = require('101/exists');
 var put = require('101/put');
 var isString = require('101/is-string');
 var runnableHostname = require('runnable-hostname');
+var ErrorCat = require('error-cat');
+
 var requireOpt = function (opts, key) {
   if (!exists(opts[key])) {
     var message = 'opts.' + key + ' is required';
@@ -70,12 +72,24 @@ function NaviEntry (optsOrKey) {
 require('util').inherits(NaviEntry, RedisList);
 
 /**
- * create a NaviEntry instance from host
- * @param  {String} host  host of an instance container
- * @return {NaviEntry}    naviEntry
+ * create a NaviEntry instance from a hostname (no protocol or port)
+ * @param  {Object}    client    redis client to use for searching
+ * @param  {String}    hostname  hostname of an instance container
+ * @return {NaviEntry} naviEntry
  */
-NaviEntry.createFromHost = function (host) {
-  return this.createFromUrl('http://'+host);
+NaviEntry.createFromHostname = function (client, hostname, cb) {
+  var key = [
+    'frontend:*.',
+    hostname
+  ].join('').toLowerCase();
+  client.keys(key, function(err, entries) {
+    if (err) { return cb(err); }
+    if (entries.length === 0) {
+      return cb(ErrorCat.create(404, 'entry not found'));
+    }
+    // pick first key
+    cb(null, new NaviEntry(entries[0]));
+  });
 };
 
 /**

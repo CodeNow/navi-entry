@@ -6,6 +6,7 @@ var expect = require('code').expect;
 var describe = lab.describe;
 var it = lab.test;
 var beforeEach = lab.beforeEach;
+var before = lab.before;
 var afterEach = lab.afterEach;
 var sinon = require('sinon');
 
@@ -16,30 +17,23 @@ var createCount = require('callback-count');
 
 var NaviEntry = require('../index.js');
 var RedisList = require('redis-types').List;
+var redisClient = redis.createClient();
+NaviEntry.setRedisClient(redisClient);
 
 describe('NaviEntry instance methods', function () {
-  var ctx;
+  var ctx= {};
+  before(function (done) {
+    redis.createClient().flushall(done);
+  });
+
   beforeEach(function (done) {
     ctx = {};
     done();
   });
-  // afterEach(function (done) {
-  //   var redisTypes = require('redis-types');
-  //   delete redisTypes.Key.prototype.redisClient;
-  //   done();
-  // });
 
   describe('w/ redis client set', function() {
-    beforeEach(function (done) {
-      ctx.redisClient = redis.createClient();
-      NaviEntry.setRedisClient(ctx.redisClient);
-      ctx.redisClient.on('connect', done);
-      ctx.redisClient.on('error', done);
-    });
-
     describe('setBackend', function () {
       beforeEach(function (done) {
-        NaviEntry.setRedisClient(redis.createClient());
         ctx.opts = {
           exposedPort: '80',
           shortHash:    'abcdef',
@@ -139,11 +133,13 @@ describe('NaviEntry instance methods', function () {
             instanceName: 'instanceName'
           };
           var host = new NaviEntry(opts).getElasticHostname();
-          var naviEntry = NaviEntry.createFromHost(host);
-          var backendUrl = 'http://10.0.0.1:4000';
-          expect(naviEntry.setBackend.bind(naviEntry, backendUrl, noop))
-            .to.throw();
-          done();
+          NaviEntry.createFromHostname(redisClient, host, function (err, naviEntry) {
+            if (err) { return done(err); }
+            var backendUrl = 'http://10.0.0.1:4000';
+            expect(naviEntry.setBackend.bind(naviEntry, backendUrl, noop))
+              .to.throw();
+            done();
+          });
         });
       });
 
@@ -159,7 +155,6 @@ describe('NaviEntry instance methods', function () {
 
     describe('del', function () {
       beforeEach(function (done) {
-        NaviEntry.setRedisClient(redis.createClient());
         ctx.opts = {
           exposedPort: '80',
           shortHash:    'abcdef',
@@ -227,27 +222,6 @@ describe('NaviEntry instance methods', function () {
         });
       });
 
-      describe('errors', function () {
-
-        it('should callback error if opts were not set', function (done) {
-          var opts = {
-            exposedPort:  '80',
-            shortHash:    'abcdef',
-            branch:       'branch',
-            ownerUsername: 'ownerUsername',
-            ownerGithub: 101,
-            userContentDomain: 'runnableapp.com',
-            masterPod: true,
-            instanceName: 'instanceName'
-          };
-          var host = new NaviEntry(opts).getElasticHostname();
-          var naviEntry = NaviEntry.createFromHost(host);
-          var backendUrl = 'http://10.0.0.1:4000';
-          expect(naviEntry.del.bind(naviEntry, backendUrl, noop))
-            .to.throw();
-          done();
-        });
-      });
       function createEntryAndSet (done) {
         var naviEntry = ctx.naviEntry = new NaviEntry(ctx.opts);
         var backendUrl = 'http://10.0.0.1:4000';
@@ -286,9 +260,12 @@ describe('NaviEntry instance methods', function () {
 
       describe('getInfo', function () {
         beforeEach(function (done) {
-          var host = ctx.naviEntry.getDirectHostname()+':'+ctx.opts.exposedPort;
-          ctx.naviEntry2 = NaviEntry.createFromHost(host);
-          done();
+          var hostname = ctx.naviEntry.getDirectHostname();
+          NaviEntry.createFromHostname(redisClient, hostname, function (err, naviEntry) {
+            if (err) { return done(err); }
+            ctx.naviEntry2 = naviEntry;
+            done();
+          });
         });
 
         it('should get info', function (done) {
@@ -329,59 +306,149 @@ describe('NaviEntry instance methods', function () {
           });
         });
       });
-
-      describe('getElasticHostname', function () {
-
-        it('should do remove the shortHash from the hostname', function (done) {
-          var hostname = ctx.naviEntry.getElasticHostname(ctx.opts.shortHash);
-          expect(hostname).to.equal('instancename-staging-ownerusername.runnableapp.com');
-          done();
-        });
-
-        describe('masterPod:true', function() {
-          beforeEach(function (done) {
-            var opts = ctx.opts = {
-              exposedPort:  '80',
-              shortHash:    'abcdef',
-              branch:       'branch',
-              instanceName: 'instanceName',
-              ownerUsername: 'ownerUsername',
-              ownerGithub: 101,
-              userContentDomain: 'runnableapp.com',
-              masterPod: true
-            };
-            ctx.naviEntry2 = new NaviEntry(opts);
-            var backendUrl = 'http://10.0.0.1:4000';
-            ctx.naviEntry2.setBackend(backendUrl, done);
-          });
-          afterEach(function (done) {
-            ctx.naviEntry2.del(done);
-          });
-
-          it('should remove the shortHash from the hostname', function (done) {
-            var hostname = ctx.naviEntry2.getElasticHostname(ctx.opts.branch);
-            expect(hostname).to.equal('instancename-staging-ownerusername.runnableapp.com');
-            done();
-          });
-        });
+    });
+  });
+  describe('del', function () {
+    describe('error', function() {
+      it('should throw if created from url', function(done) {
+        var naviEntry = NaviEntry.createFromUrl('test.com');
+        expect(naviEntry.del.bind(naviEntry)).to.throw();
+        done();
       });
-
-      describe('getDirectHostname', function () {
-        it('should have the shortHash hostname', function (done) {
-          var hostname = ctx.naviEntry.getDirectHostname(ctx.opts.branch);
-          expect(hostname).to.equal('abcdef-instancename-staging-ownerusername.runnableapp.com');
-          done();
-        });
-
-        describe('no branch', function () {
-          it('should stuff', function (done) {
-            var host = ctx.naviEntry.getElasticHostname()+':'+ctx.opts.exposedPort;
-            var naviEntry2 = NaviEntry.createFromHost(host);
-            expect(naviEntry2.getDirectHostname.bind(naviEntry2))
-              .to.throw();
-            done();
-          });
-        });
+    });
+  });
+  describe('_validateShortHash', function () {
+    it('should throw if created from url', function(done) {
+      var naviEntry = NaviEntry.createFromUrl('test.com');
+      expect(naviEntry._validateShortHash.bind(naviEntry)).to.throw();
+      done();
+    });
+  });
+  describe('getDirectHostname', function () {
+    describe('masterPod: true', function () {
+      var opts = {
+        exposedPort:  '80',
+        shortHash:    'abcdef',
+        branch:       'branch',
+        instanceName: 'instanceName',
+        ownerUsername: 'ownerUsername',
+        ownerGithub: 101,
+        userContentDomain: 'runnableapp.com',
+        masterPod: true
+      };
+      beforeEach(function(done) {
+        ctx.naviEntry = new NaviEntry(opts);
+        done();
+      });
+      it('should remove the shortHash from the hostname', function (done) {
+        var hostname = ctx.naviEntry.getDirectHostname(opts.shortHash);
+        expect(hostname).to.equal('abcdef-instancename-staging-ownerusername.runnableapp.com');
+        done();
+      });
+    });
+    describe('masterPod: true no branch', function () {
+      var opts = {
+        exposedPort:  '80',
+        shortHash:    'abcdef',
+        instanceName: 'instanceName',
+        ownerUsername: 'ownerUsername',
+        ownerGithub: 101,
+        userContentDomain: 'runnableapp.com',
+        masterPod: true
+      };
+      beforeEach(function(done) {
+        ctx.naviEntry = new NaviEntry(opts);
+        done();
+      });
+      it('should remove the shortHash from the hostname', function (done) {
+        var hostname = ctx.naviEntry.getDirectHostname(opts.shortHash);
+        expect(hostname).to.equal('abcdef-instancename-staging-ownerusername.runnableapp.com');
+        done();
+      });
+    });
+    describe('masterPod: false', function () {
+      var opts = {
+        exposedPort:  '80',
+        shortHash:    'abcdef',
+        branch:       'branch',
+        instanceName: 'branch-instanceName',
+        ownerUsername: 'ownerUsername',
+        ownerGithub: 101,
+        userContentDomain: 'runnableapp.com',
+        masterPod: false
+      };
+      beforeEach(function(done) {
+        ctx.naviEntry = new NaviEntry(opts);
+        done();
+      });
+      it('should remove the shortHash from the hostname', function (done) {
+        var hostname = ctx.naviEntry.getDirectHostname(opts.shortHash);
+        expect(hostname).to.equal('abcdef-instancename-staging-ownerusername.runnableapp.com');
+        done();
+      });
+    });
+  });
+  describe('getElasticHostname', function () {
+    describe('masterPod: true', function () {
+      var opts = {
+        exposedPort:  '80',
+        shortHash:    'abcdef',
+        branch:       'branch',
+        instanceName: 'instanceName',
+        ownerUsername: 'ownerUsername',
+        ownerGithub: 101,
+        userContentDomain: 'runnableapp.com',
+        masterPod: true
+      };
+      beforeEach(function(done) {
+        ctx.naviEntry = new NaviEntry(opts);
+        done();
+      });
+      it('should remove the shortHash from the hostname', function (done) {
+        var hostname = ctx.naviEntry.getElasticHostname(opts.shortHash);
+        expect(hostname).to.equal('instancename-staging-ownerusername.runnableapp.com');
+        done();
+      });
+    });
+    describe('masterPod: true no branch', function () {
+      var opts = {
+        exposedPort:  '80',
+        shortHash:    'abcdef',
+        instanceName: 'instanceName',
+        ownerUsername: 'ownerUsername',
+        ownerGithub: 101,
+        userContentDomain: 'runnableapp.com',
+        masterPod: true
+      };
+      beforeEach(function(done) {
+        ctx.naviEntry = new NaviEntry(opts);
+        done();
+      });
+      it('should remove the shortHash from the hostname', function (done) {
+        var hostname = ctx.naviEntry.getElasticHostname(opts.shortHash);
+        expect(hostname).to.equal('instancename-staging-ownerusername.runnableapp.com');
+        done();
+      });
+    });
+    describe('masterPod: false', function () {
+      var opts = {
+        exposedPort:  '80',
+        shortHash:    'abcdef',
+        branch:       'branch',
+        instanceName: 'branch-instanceName',
+        ownerUsername: 'ownerUsername',
+        ownerGithub: 101,
+        userContentDomain: 'runnableapp.com',
+        masterPod: false
+      };
+      beforeEach(function(done) {
+        ctx.naviEntry = new NaviEntry(opts);
+        done();
+      });
+      it('should remove the shortHash from the hostname', function (done) {
+        var hostname = ctx.naviEntry.getElasticHostname(opts.shortHash);
+        expect(hostname).to.equal('instancename-staging-ownerusername.runnableapp.com');
+        done();
       });
     });
   });
