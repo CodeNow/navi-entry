@@ -228,14 +228,14 @@ NaviEntry.prototype.getInfo = function (cb) {
   });
 };
 function jsonParse (str, cb) {
-  var parsed, err;
+  var parsed = null;
+  var err = null;
   try {
     parsed = JSON.parse(str);
   }
   catch (e) {
     err = e;
   }
-
   cb(err, parsed);
 }
 /**
