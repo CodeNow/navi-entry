@@ -228,14 +228,16 @@ NaviEntry.prototype.getInfo = function (cb) {
   });
 };
 function jsonParse (str, cb) {
+  var parsed = null;
+  var err = null;
   try {
-    cb(null, JSON.parse(str));
+    parsed = JSON.parse(str);
   }
-  catch (err) {
-    cb(err);
+  catch (e) {
+    err = e;
   }
+  cb(err, parsed);
 }
-
 /**
  * get the elastic url associated with the naviEntry
  * NOTE: should only be used for a naviEntry with a DIRECT key
