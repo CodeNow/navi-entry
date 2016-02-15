@@ -38,7 +38,7 @@ describe('NaviEntry instance methods', function () {
           exposedPort: '80',
           shortHash:    'abcdef',
           branch:       'branch',
-          ownerUsername: 'ownerUsername',
+          ownerGitHubUsername: 'ownerGitHubUsername',
           ownerGithub: 101,
           userContentDomain: 'runnableapp.com',
           instanceName: 'instanceName'
@@ -126,7 +126,7 @@ describe('NaviEntry instance methods', function () {
             exposedPort:  '80',
             shortHash:    'abcdef',
             branch:       'branch',
-            ownerUsername: 'ownerUsername',
+            ownerGitHubUsername: 'ownerGitHubUsername',
             ownerGithub: 101,
             userContentDomain: 'runnableapp.com',
             masterPod: true,
@@ -159,7 +159,7 @@ describe('NaviEntry instance methods', function () {
           exposedPort: '80',
           shortHash:    'abcdef',
           branch:       'branch',
-          ownerUsername: 'ownerUsername',
+          ownerGitHubUsername: 'ownerGitHubUsername',
           ownerGithub: 101,
           userContentDomain: 'runnableapp.com',
           instanceName: 'instanceName'
@@ -245,7 +245,7 @@ describe('NaviEntry instance methods', function () {
           branch:       'branch',
           // instanceName includes branch, masterPod:false
           instanceName: 'branch-instanceName',
-          ownerUsername: 'ownerUsername',
+          ownerGitHubUsername: 'ownerGitHubUsername',
           ownerGithub: 101,
           userContentDomain: 'runnableapp.com',
           masterPod: false
@@ -331,7 +331,7 @@ describe('NaviEntry instance methods', function () {
         shortHash:    'abcdef',
         branch:       'branch',
         instanceName: 'instanceName',
-        ownerUsername: 'ownerUsername',
+        ownerGitHubUsername: 'ownerGitHubUsername',
         ownerGithub: 101,
         userContentDomain: 'runnableapp.com',
         masterPod: true
@@ -351,7 +351,7 @@ describe('NaviEntry instance methods', function () {
         exposedPort:  '80',
         shortHash:    'abcdef',
         instanceName: 'instanceName',
-        ownerUsername: 'ownerUsername',
+        ownerGitHubUsername: 'ownerGitHubUsername',
         ownerGithub: 101,
         userContentDomain: 'runnableapp.com',
         masterPod: true
@@ -372,7 +372,7 @@ describe('NaviEntry instance methods', function () {
         shortHash:    'abcdef',
         branch:       'branch',
         instanceName: 'branch-instanceName',
-        ownerUsername: 'ownerUsername',
+        ownerGitHubUsername: 'ownerGitHubUsername',
         ownerGithub: 101,
         userContentDomain: 'runnableapp.com',
         masterPod: false
@@ -395,7 +395,7 @@ describe('NaviEntry instance methods', function () {
         shortHash:    'abcdef',
         branch:       'branch',
         instanceName: 'instanceName',
-        ownerUsername: 'ownerUsername',
+        ownerGitHubUsername: 'ownerGitHubUsername',
         ownerGithub: 101,
         userContentDomain: 'runnableapp.com',
         masterPod: true
@@ -415,7 +415,7 @@ describe('NaviEntry instance methods', function () {
         exposedPort:  '80',
         shortHash:    'abcdef',
         instanceName: 'instanceName',
-        ownerUsername: 'ownerUsername',
+        ownerGitHubUsername: 'ownerGitHubUsername',
         ownerGithub: 101,
         userContentDomain: 'runnableapp.com',
         masterPod: true
@@ -436,7 +436,7 @@ describe('NaviEntry instance methods', function () {
         shortHash:    'abcdef',
         branch:       'branch',
         instanceName: 'branch-instanceName',
-        ownerUsername: 'ownerUsername',
+        ownerGitHubUsername: 'ownerGitHubUsername',
         ownerGithub: 101,
         userContentDomain: 'runnableapp.com',
         masterPod: false
