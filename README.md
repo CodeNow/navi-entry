@@ -10,7 +10,7 @@ var opts = {
   containerPort: '80',
   branch:       'branch',
   instanceName: 'instanceName',
-  ownerUsername: 'ownerUsername',
+  ownerGitHubUsername: 'ownerGitHubUsername',
   userContentDomain: 'runnableapp.com'
 };
 

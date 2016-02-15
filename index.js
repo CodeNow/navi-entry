@@ -19,7 +19,7 @@ var formatOpts = function (opts) {
   requireOpt(opts, 'exposedPort');
   requireOpt(opts, 'shortHash');
   requireOpt(opts, 'instanceName');
-  requireOpt(opts, 'ownerUsername');
+  requireOpt(opts, 'ownerGitHubUsername');
   requireOpt(opts, 'userContentDomain');
   requireOpt(opts, 'masterPod');
   requireOpt(opts, 'ownerGithub');
@@ -32,7 +32,7 @@ module.exports = NaviEntry;
  * Create hipache host (redis list)
  * @param  {Object|String}  optsOrKey      options or key
  * @param  {String}    opts.exposedPort    container.ports hash key - ex: "80/tcp"
- * @param  {String}    opts.ownerUsername  instance owner's username
+ * @param  {String}    opts.ownerGitHubUsername  instance owner's username
  * @param  {String}    [opts.instanceName] instance name
  *                                           will override instance value if both are provided
  *                                           required if instance not provided

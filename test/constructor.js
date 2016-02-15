@@ -72,7 +72,7 @@ describe('NaviEntry', function () {
             exposedPort: '80',
             shortHash: 'abcdef',
             instanceName: 'instanceName',
-            ownerUsername: 'ownerUsername'
+            ownerGitHubUsername: 'ownerGitHubUsername'
           })
         ).to.throw(/required/);
         expect(
@@ -80,7 +80,7 @@ describe('NaviEntry', function () {
             exposedPort: '80',
             shortHash: 'abcdef',
             instanceName: 'instanceName',
-            ownerUsername: 'ownerUsername',
+            ownerGitHubUsername: 'ownerGitHubUsername',
             userContentDomain: 'runnableapp.com'
           })
         ).to.throw(/required/);
@@ -89,7 +89,7 @@ describe('NaviEntry', function () {
             exposedPort: '80',
             shortHash: 'abcdef',
             instanceName: 'instanceName',
-            ownerUsername: 'ownerUsername',
+            ownerGitHubUsername: 'ownerGitHubUsername',
             userContentDomain: 'runnableapp.com',
             masterPod: true
           })
@@ -99,7 +99,7 @@ describe('NaviEntry', function () {
             exposedPort: '80',
             shortHash: 'abcdef',
             instanceName: 'instanceName',
-            ownerUsername: 'ownerUsername',
+            ownerGitHubUsername: 'ownerGitHubUsername',
             userContentDomain: 'runnableapp.com',
             masterPod: true,
             ownerGithub: 101
@@ -116,7 +116,7 @@ describe('NaviEntry', function () {
             branch:       'branch',
             shortHash: 'abcdef',
             instanceName: 'instanceName',
-            ownerUsername: 'ownerUsername',
+            ownerGitHubUsername: 'ownerGitHubUsername',
             ownerGithub: 101,
             userContentDomain: 'runnableapp.com',
             masterPod: true
@@ -134,7 +134,7 @@ describe('NaviEntry', function () {
           exposedPort: '80',
           shortHash:    'abcdef',
           branch:       'branch',
-          ownerUsername: 'ownerUsername',
+          ownerGitHubUsername: 'ownerGitHubUsername',
           ownerGithub: 101,
           userContentDomain: 'runnableapp.com',
           instanceName: 'instanceName'
@@ -210,13 +210,13 @@ describe('NaviEntry', function () {
             opts.shortHash, '-',
             repoName, '-',
             'staging', '-',
-            opts.ownerUsername, '.',
+            opts.ownerGitHubUsername, '.',
             opts.userContentDomain
           ].join('').toLowerCase());
         expect(naviEntry.opts.exposedPort).to.equal(opts.exposedPort);
         expect(naviEntry.opts.instanceName).to.equal(opts.instanceName);
         expect(naviEntry.opts.branch).to.equal(opts.branch);
-        expect(naviEntry.opts.ownerUsername).to.equal(opts.ownerUsername);
+        expect(naviEntry.opts.ownerGitHubUsername).to.equal(opts.ownerGitHubUsername);
         expect(naviEntry.opts.userContentDomain).to.equal(opts.userContentDomain);
       }
       function expectElasticKey (naviEntry, opts) {
@@ -224,13 +224,13 @@ describe('NaviEntry', function () {
           .to.equal([
             'frontend:',
             opts.exposedPort, '.',
-            opts.instanceName, '-staging-', opts.ownerUsername, '.',
+            opts.instanceName, '-staging-', opts.ownerGitHubUsername, '.',
             opts.userContentDomain
           ].join('').toLowerCase());
         expect(naviEntry.opts.exposedPort).to.equal(opts.exposedPort);
         expect(naviEntry.opts.instanceName).to.equal(opts.instanceName);
         expect(naviEntry.opts.branch).to.equal(opts.branch);
-        expect(naviEntry.opts.ownerUsername).to.equal(opts.ownerUsername);
+        expect(naviEntry.opts.ownerGitHubUsername).to.equal(opts.ownerGitHubUsername);
         expect(naviEntry.opts.userContentDomain).to.equal(opts.userContentDomain);
       }
     });
@@ -260,7 +260,7 @@ describe('NaviEntry', function () {
       exposedPort: '80',
       shortHash:    'abcdef',
       branch:       'branch',
-      ownerUsername: 'ownerUsername',
+      ownerGitHubUsername: 'ownerGitHubUsername',
       ownerGithub: 101,
       userContentDomain: 'runnableapp.com',
       masterPod: true,
