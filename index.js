@@ -6,7 +6,7 @@ var RedisList  = redisTypes.List;
 var exists = require('101/exists');
 var put = require('101/put');
 var isString = require('101/is-string');
-var runnableHostname = require('runnable-hostname');
+var runnableHostname = require('@runnable/hostname');
 var ErrorCat = require('error-cat');
 
 var requireOpt = function (opts, key) {
