@@ -14,5 +14,6 @@ var opts = {
   userContentDomain: 'runnableapp.com'
 };
 
+
 var naviEntry = new NaviEntry(opts);
 ```
