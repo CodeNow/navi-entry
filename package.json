@@ -25,7 +25,7 @@
     "error-cat": "^1.2.0",
     "keypather": "^1.10.1",
     "redis-types": "^0.2.4",
-    "runnable-hostname": "git+ssh://git@github.com:CodeNow/runnable-hostname#v1.0.3"
+    "@runnable/hostname": "^3.0.0"
   },
   "devDependencies": {
     "code": "^1.4.0",

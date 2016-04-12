@@ -6,7 +6,7 @@ var RedisList  = redisTypes.List;
 var exists = require('101/exists');
 var put = require('101/put');
 var isString = require('101/is-string');
-var runnableHostname = require('runnable-hostname');
+var runnableHostname = require('@runnable/hostname');
 var ErrorCat = require('error-cat');
 
 var requireOpt = function (opts, key) {
@@ -249,7 +249,7 @@ NaviEntry.prototype.getElasticHostname = function (shortHash) {
     shortHash = this._validateShortHash(shortHash);
   }
   var elasticRe = new RegExp('^frontend:[0-9]+[.]', 'i');
-  var directRe = new RegExp('^frontend:[0-9]+[.]'+shortHash+'-', 'i');
+  var directRe = new RegExp('^frontend:[0-9]+[.]'+shortHash+'-{1,2}', 'i');
   return this.elasticKey ?
     this.elasticKey.replace(elasticRe, ''):
     this.directKey.replace(directRe, '');

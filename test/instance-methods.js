@@ -387,6 +387,51 @@ describe('NaviEntry instance methods', function () {
         done();
       });
     });
+    describe('isolation master', function () {
+      var opts = {
+        exposedPort:  '80',
+        shortHash:    'abcdef',
+        branch:       'branch',
+        instanceName: 'branch-instanceName',
+        ownerUsername: 'ownerUsername',
+        ownerGithub: 101,
+        userContentDomain: 'runnableapp.com',
+        masterPod: false,
+        isolated: 'asda34',
+        isIsolationGroupMaster: true
+      };
+      beforeEach(function(done) {
+        ctx.naviEntry = new NaviEntry(opts);
+        done();
+      });
+      it('should remove the shortHash from the hostname', function (done) {
+        var hostname = ctx.naviEntry.getDirectHostname(opts.shortHash);
+        expect(hostname).to.equal('abcdef-instancename-staging-ownerusername.runnableapp.com');
+        done();
+      });
+    });
+    describe('isolated dependency', function () {
+      var opts = {
+        exposedPort:  '80',
+        shortHash:    'abcdef',
+        branch:       'branch',
+        instanceName: 'abcdef--instanceName',
+        ownerUsername: 'ownerUsername',
+        ownerGithub: 101,
+        userContentDomain: 'runnableapp.com',
+        masterPod: false,
+        isolated: 'asda34'
+      };
+      beforeEach(function(done) {
+        ctx.naviEntry = new NaviEntry(opts);
+        done();
+      });
+      it('should remove the shortHash from the hostname', function (done) {
+        var hostname = ctx.naviEntry.getDirectHostname(opts.shortHash);
+        expect(hostname).to.equal('abcdef--instancename-staging-ownerusername.runnableapp.com');
+        done();
+      });
+    });
   });
   describe('getElasticHostname', function () {
     describe('masterPod: true', function () {
@@ -440,6 +485,51 @@ describe('NaviEntry instance methods', function () {
         ownerGithub: 101,
         userContentDomain: 'runnableapp.com',
         masterPod: false
+      };
+      beforeEach(function(done) {
+        ctx.naviEntry = new NaviEntry(opts);
+        done();
+      });
+      it('should remove the shortHash from the hostname', function (done) {
+        var hostname = ctx.naviEntry.getElasticHostname(opts.shortHash);
+        expect(hostname).to.equal('instancename-staging-ownerusername.runnableapp.com');
+        done();
+      });
+    });
+    describe('isolation master', function () {
+      var opts = {
+        exposedPort:  '80',
+        shortHash:    'abcdef',
+        branch:       'branch',
+        instanceName: 'branch-instanceName',
+        ownerUsername: 'ownerUsername',
+        ownerGithub: 101,
+        userContentDomain: 'runnableapp.com',
+        masterPod: false,
+        isolated: 'asda34',
+        isIsolationGroupMaster: true
+      };
+      beforeEach(function(done) {
+        ctx.naviEntry = new NaviEntry(opts);
+        done();
+      });
+      it('should remove the shortHash from the hostname', function (done) {
+        var hostname = ctx.naviEntry.getElasticHostname(opts.shortHash);
+        expect(hostname).to.equal('instancename-staging-ownerusername.runnableapp.com');
+        done();
+      });
+    });
+    describe('isolated dependency', function () {
+      var opts = {
+        exposedPort:  '80',
+        shortHash:    'abcdef',
+        branch:       'branch',
+        instanceName: 'abcdef--instanceName',
+        ownerUsername: 'ownerUsername',
+        ownerGithub: 101,
+        userContentDomain: 'runnableapp.com',
+        masterPod: false,
+        isolated: 'asda34'
       };
       beforeEach(function(done) {
         ctx.naviEntry = new NaviEntry(opts);
