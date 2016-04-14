@@ -113,11 +113,11 @@ NaviEntry.createFromUrl = function (uri) {
  * @param  {Object}    this.opts   options is required
  */
 NaviEntry.prototype._createKeys = function () {
-  if (this.opts.masterPod) { // master w/ repo, ex: api master
-    this._createElasticKey();
-  }
   if (this.opts.branch) {
     this._createDirectKey();
+    if (this.opts.masterPod) { // master w/ repo, ex: api master
+      this._createElasticKey();
+    }
   } else { // Non repo container
     this._createElasticKey();
   }
