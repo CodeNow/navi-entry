@@ -114,16 +114,12 @@ NaviEntry.createFromUrl = function (uri) {
  */
 NaviEntry.prototype._createKeys = function () {
   if (this.opts.masterPod) { // master w/ repo, ex: api master
-    if (this.opts.branch) {
-      this._createElasticKey();
-      this._createDirectKey();
-    }
-    else { // masterPod w/out repo, ex: mongo
-      this._createElasticKey();
-    }
+    this._createElasticKey();
   }
-  else { // direct, ex: auto launch
+  if (this.opts.branch) {
     this._createDirectKey();
+  } else { // Non repo container
+    this._createElasticKey();
   }
 };
 
