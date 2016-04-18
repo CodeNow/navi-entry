@@ -26,7 +26,7 @@ var formatOpts = function (opts) {
   requireOpt(opts, 'masterPod');
   requireOpt(opts, 'ownerGithub');
   opts.exposedPort = opts.exposedPort.split('/')[0];
-  if (opts.isolated && !opts.isIsolationGroupMaster) {
+  if (opts.isolated && !opts.masterPod && !opts.isIsolationGroupMaster) {
     var regexResult = regexForRemovingShortHashFromDirectUrls.exec(opts.instanceName);
     if (regexResult) {
       opts.isolatedParentShortHash = regexResult[1];
