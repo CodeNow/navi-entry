@@ -31,7 +31,7 @@ function createNaviEntry () {
     return new NaviEntry(args[0], args[1], args[2], args[3]);
   }
 }
-
+var regexForRemovingShortHashFromDirectUrls = /^[A-z0-9]*-{1,2}/;
 describe('NaviEntry', function () {
   var ctx;
   before(function (done) {
@@ -137,14 +137,14 @@ describe('NaviEntry', function () {
           ownerUsername: 'ownerUsername',
           ownerGithub: 101,
           userContentDomain: 'runnableapp.com',
-          instanceName: 'instanceName'
+          instanceName: 'instanceName',
+          masterPod: false
         };
         done();
       });
 
       describe('masterPod:false', function () {
         beforeEach(function (done) {
-          ctx.opts.masterPod = false;
           ctx.opts.instanceName = ctx.opts.branch+'-'+ctx.opts.instanceName;
           done();
         });
@@ -153,7 +153,11 @@ describe('NaviEntry', function () {
           var opts = ctx.opts;
           var naviEntry = new NaviEntry(ctx.opts);
 
-          expectDirectKey(naviEntry, opts);
+          expectDirectKey(
+            naviEntry,
+            opts,
+            'abcdef-instancename-staging-ownerusername.runnableapp.com'
+          );
           expect(naviEntry.elasticKey).to.not.exist();
           expect(naviEntry.key).to.equal(naviEntry.directKey);
 
@@ -196,22 +200,120 @@ describe('NaviEntry', function () {
           });
         });
       });
+      describe('isolated:true', function () {
+        beforeEach(function (done) {
+          ctx.opts.isolated = 'asdasd';
+          done();
+        });
 
+        describe('Not isIsolationGroupMaster', function () {
+          beforeEach(function (done) {
+            ctx.opts.instanceName = 'asdad3f--' + ctx.opts.instanceName;
+            done();
+          });
 
-      function expectDirectKey (naviEntry, opts) {
+          it('should create an NaviEntry instance, isolated:true', function (done) {
+            var opts = ctx.opts;
+            var naviEntry = new NaviEntry(ctx.opts);
+
+            expectDirectKey(
+              naviEntry,
+              opts,
+              'asdad3f--instancename-staging-ownerusername.runnableapp.com'
+            );
+            expect(naviEntry.elasticKey).to.not.exist();
+            expect(naviEntry.key).to.equal(naviEntry.directKey);
+
+            done();
+          });
+
+          describe('branch:undefined (Non-repo isolated containers)', function () {
+            beforeEach(function (done) {
+              delete ctx.opts.branch;
+              done();
+            });
+
+            it('should create a NaviEntry instance', function (done) {
+              var opts = ctx.opts;
+              var naviEntry = new NaviEntry(ctx.opts);
+
+              expectDirectKey(
+                naviEntry,
+                opts,
+                'asdad3f--instancename-staging-ownerusername.runnableapp.com'
+              );
+              expect(naviEntry.elasticKey).to.not.exist();
+              expect(naviEntry.key).to.equal(naviEntry.directKey);
+              done();
+            });
+          });
+          describe('branch:none masterpod (Non-repo isolate added after isolation)', function () {
+            beforeEach(function (done) {
+              delete ctx.opts.branch;
+              ctx.opts.masterPod = true;
+              done();
+            });
+
+            it('should create a NaviEntry instance', function (done) {
+              var opts = ctx.opts;
+              var naviEntry = new NaviEntry(ctx.opts);
+
+              expect(naviEntry.directKey).to.not.exist();
+              expectElasticKey(
+                naviEntry,
+                opts,
+                'instancename-staging-ownerusername.runnableapp.com'
+              );
+              expect(naviEntry.elasticKey).to.equal(naviEntry.key);
+
+              done();
+            });
+          });
+        });
+
+        describe('isIsolationGroupMaster', function () {
+          beforeEach(function (done) {
+            ctx.opts.isIsolationGroupMaster = true;
+            done();
+          });
+
+          it('should create a NaviEntry instance', function (done) {
+            var opts = ctx.opts;
+            var naviEntry = new NaviEntry(ctx.opts);
+
+            expectDirectKey(
+              naviEntry,
+              opts,
+              'abcdef-instancename-staging-ownerusername.runnableapp.com'
+            );
+            expect(naviEntry.elasticKey).to.not.exist();
+            expect(naviEntry.key).to.equal(naviEntry.directKey);
+
+            done();
+          });
+        });
+      });
+
+      function expectDirectKey (naviEntry, opts, theUrl) {
         var repoName = opts.masterPod ?
           opts.instanceName:
           // non masterPod instances include branch in their name
           opts.instanceName.replace(opts.branch+'-', '');
-        expect(naviEntry.directKey)
-          .to.equal([
-            'frontend:',
-            opts.exposedPort, '.',
-            opts.shortHash, '-',
+        if (!opts.isolated) {
+          repoName = opts.shortHash + '-' + repoName;
+        }
+        theUrl = theUrl || [
             repoName, '-',
             'staging', '-',
             opts.ownerUsername, '.',
             opts.userContentDomain
+          ].join('').toLowerCase();
+
+        expect(naviEntry.directKey)
+          .to.equal([
+            'frontend:',
+            opts.exposedPort, '.',
+            theUrl
           ].join('').toLowerCase());
         expect(naviEntry.opts.exposedPort).to.equal(opts.exposedPort);
         expect(naviEntry.opts.instanceName).to.equal(opts.instanceName);
@@ -219,13 +321,19 @@ describe('NaviEntry', function () {
         expect(naviEntry.opts.ownerUsername).to.equal(opts.ownerUsername);
         expect(naviEntry.opts.userContentDomain).to.equal(opts.userContentDomain);
       }
-      function expectElasticKey (naviEntry, opts) {
+      function expectElasticKey (naviEntry, opts, theUrl) {
+        var repoName = opts.isolated ?
+         opts.instanceName.replace(regexForRemovingShortHashFromDirectUrls, ''): opts.instanceName;
+        theUrl = theUrl || [
+            repoName, '-staging-',
+            opts.ownerUsername, '.',
+            opts.userContentDomain
+          ].join('').toLowerCase();
         expect(naviEntry.elasticKey)
           .to.equal([
             'frontend:',
             opts.exposedPort, '.',
-            opts.instanceName, '-staging-', opts.ownerUsername, '.',
-            opts.userContentDomain
+            theUrl
           ].join('').toLowerCase());
         expect(naviEntry.opts.exposedPort).to.equal(opts.exposedPort);
         expect(naviEntry.opts.instanceName).to.equal(opts.instanceName);

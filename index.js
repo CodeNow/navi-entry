@@ -15,6 +15,8 @@ var requireOpt = function (opts, key) {
     throw new Error(message);
   }
 };
+
+var regexForRemovingShortHashFromDirectUrls = /^([A-z0-9]*)-{1,2}.*/;
 var formatOpts = function (opts) {
   requireOpt(opts, 'exposedPort');
   requireOpt(opts, 'shortHash');
@@ -24,6 +26,13 @@ var formatOpts = function (opts) {
   requireOpt(opts, 'masterPod');
   requireOpt(opts, 'ownerGithub');
   opts.exposedPort = opts.exposedPort.split('/')[0];
+  if (opts.isolated && !opts.isIsolationGroupMaster) {
+    var regexResult = regexForRemovingShortHashFromDirectUrls.exec(opts.instanceName);
+    if (regexResult) {
+      opts.isolatedParentShortHash = regexResult[1];
+    }
+  }
+
 };
 
 module.exports = NaviEntry;
@@ -113,13 +122,11 @@ NaviEntry.createFromUrl = function (uri) {
  * @param  {Object}    this.opts   options is required
  */
 NaviEntry.prototype._createKeys = function () {
-  if (this.opts.branch) {
-    this._createDirectKey();
-    if (this.opts.masterPod) { // master w/ repo, ex: api master
-      this._createElasticKey();
-    }
-  } else { // Non repo container
+  if (this.opts.masterPod) {
     this._createElasticKey();
+  }
+  if (!(this.opts.masterPod && !this.opts.branch)) { // master w/o branches (Non-repo containers)
+    this._createDirectKey();
   }
 };
 
@@ -272,6 +279,10 @@ NaviEntry.prototype.getDirectHostname = function (shortHash) {
  */
 NaviEntry.prototype._validateShortHash = function (shortHash) {
   shortHash = shortHash || this.opts.shortHash;
+  if (this.opts.isolatedParentShortHash) {
+    // add the extra - so it works with all of the replaces
+    shortHash = this.opts.isolatedParentShortHash + '-';
+  }
   if (!shortHash) {
     throw new Error('shortHash or opts.shortHash is required');
   }
