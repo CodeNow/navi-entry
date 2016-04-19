@@ -362,6 +362,64 @@ describe('NaviEntry', function () {
     });
   });
 
+  describe('formatOpts', function () {
+    var opts = {
+      exposedPort: '80',
+      shortHash: 'abcdef',
+      branch: 'branch',
+      ownerUsername: 'ownerUsername',
+      ownerGithub: 101,
+      userContentDomain: 'runnableapp.com',
+      masterPod: true,
+      instanceName: 'instanceName'
+    };
+    describe('Verifying errors', function () {
+      Object.keys(opts).forEach(function (optKey) {
+        it('should throw error when missing the required opt ' + optKey, function (done) {
+          expect(function () {
+            delete opts[optKey];
+            NaviEntry.formatOpts(opts);
+          }).to.throw(Error);
+          done();
+        });
+      });
+    });
+
+    it('should pull out the exposed port', function (done) {
+      opts.exposedPort = '3000/sdfsfadfadsf';
+      NaviEntry.formatOpts(opts);
+      expect(opts.exposedPort).to.equal('3000');
+      done();
+    });
+
+    it('should save isolatedParentShorthash since it\'s an isolated container', function (done) {
+      opts.isolated = 'asdfasdfasdfgasdfh';
+      opts.instanceName = '1123f1--instanceName';
+      opts.masterPod = false;
+      NaviEntry.formatOpts(opts);
+      expect(opts.isolatedParentShortHash).to.equal('1123f1');
+      done();
+    });
+
+    // This would be a freshly added non-repo container added to an isolation
+    it('should not save isolatedParentShorthash, since this is a masterpod', function (done) {
+      opts.isolated = 'asdfasdfasdfgasdfh';
+      opts.instanceName = '1123f1--instanceName';
+      NaviEntry.formatOpts(opts);
+      expect(opts.isolatedParentShortHash).to.be.undefined();
+      done();
+    });
+
+    it('should not save isolatedParentShorthash, since this is the group master', function (done) {
+      opts.isolated = 'asdfasdfasdfgasdfh';
+      opts.instanceName = '1123f1--instanceName';
+      opts.isIsolationGroupMaster = true;
+      NaviEntry.formatOpts(opts);
+      expect(opts.isolatedParentShortHash).to.be.undefined();
+      done();
+    });
+  });
+
   describe('createFromHostname', function () {
     var testEntry;
     var opts = {
