@@ -31,7 +31,7 @@ function createNaviEntry () {
     return new NaviEntry(args[0], args[1], args[2], args[3]);
   }
 }
-
+var regexForRemovingShortHashFromDirectUrls = /^[A-z0-9]*-{1,2}/;
 describe('NaviEntry', function () {
   var ctx;
   before(function (done) {
@@ -137,14 +137,14 @@ describe('NaviEntry', function () {
           ownerUsername: 'ownerUsername',
           ownerGithub: 101,
           userContentDomain: 'runnableapp.com',
-          instanceName: 'instanceName'
+          instanceName: 'instanceName',
+          masterPod: false
         };
         done();
       });
 
       describe('masterPod:false', function () {
         beforeEach(function (done) {
-          ctx.opts.masterPod = false;
           ctx.opts.instanceName = ctx.opts.branch+'-'+ctx.opts.instanceName;
           done();
         });
@@ -153,7 +153,11 @@ describe('NaviEntry', function () {
           var opts = ctx.opts;
           var naviEntry = new NaviEntry(ctx.opts);
 
-          expectDirectKey(naviEntry, opts);
+          expectDirectKey(
+            naviEntry,
+            opts,
+            'abcdef-instancename-staging-ownerusername.runnableapp.com'
+          );
           expect(naviEntry.elasticKey).to.not.exist();
           expect(naviEntry.key).to.equal(naviEntry.directKey);
 
@@ -196,22 +200,120 @@ describe('NaviEntry', function () {
           });
         });
       });
+      describe('isolated:true', function () {
+        beforeEach(function (done) {
+          ctx.opts.isolated = 'asdasd';
+          done();
+        });
 
+        describe('Not isIsolationGroupMaster', function () {
+          beforeEach(function (done) {
+            ctx.opts.instanceName = 'asdad3f--' + ctx.opts.instanceName;
+            done();
+          });
 
-      function expectDirectKey (naviEntry, opts) {
+          it('should create an NaviEntry instance, isolated:true', function (done) {
+            var opts = ctx.opts;
+            var naviEntry = new NaviEntry(ctx.opts);
+
+            expectDirectKey(
+              naviEntry,
+              opts,
+              'asdad3f--instancename-staging-ownerusername.runnableapp.com'
+            );
+            expect(naviEntry.elasticKey).to.not.exist();
+            expect(naviEntry.key).to.equal(naviEntry.directKey);
+
+            done();
+          });
+
+          describe('branch:undefined (Non-repo isolated containers)', function () {
+            beforeEach(function (done) {
+              delete ctx.opts.branch;
+              done();
+            });
+
+            it('should create a NaviEntry instance', function (done) {
+              var opts = ctx.opts;
+              var naviEntry = new NaviEntry(ctx.opts);
+
+              expectDirectKey(
+                naviEntry,
+                opts,
+                'asdad3f--instancename-staging-ownerusername.runnableapp.com'
+              );
+              expect(naviEntry.elasticKey).to.not.exist();
+              expect(naviEntry.key).to.equal(naviEntry.directKey);
+              done();
+            });
+          });
+          describe('branch:none masterpod (Non-repo isolate added after isolation)', function () {
+            beforeEach(function (done) {
+              delete ctx.opts.branch;
+              ctx.opts.masterPod = true;
+              done();
+            });
+
+            it('should create a NaviEntry instance', function (done) {
+              var opts = ctx.opts;
+              var naviEntry = new NaviEntry(ctx.opts);
+
+              expect(naviEntry.directKey).to.not.exist();
+              expectElasticKey(
+                naviEntry,
+                opts,
+                'instancename-staging-ownerusername.runnableapp.com'
+              );
+              expect(naviEntry.elasticKey).to.equal(naviEntry.key);
+
+              done();
+            });
+          });
+        });
+
+        describe('isIsolationGroupMaster', function () {
+          beforeEach(function (done) {
+            ctx.opts.isIsolationGroupMaster = true;
+            done();
+          });
+
+          it('should create a NaviEntry instance', function (done) {
+            var opts = ctx.opts;
+            var naviEntry = new NaviEntry(ctx.opts);
+
+            expectDirectKey(
+              naviEntry,
+              opts,
+              'abcdef-instancename-staging-ownerusername.runnableapp.com'
+            );
+            expect(naviEntry.elasticKey).to.not.exist();
+            expect(naviEntry.key).to.equal(naviEntry.directKey);
+
+            done();
+          });
+        });
+      });
+
+      function expectDirectKey (naviEntry, opts, theUrl) {
         var repoName = opts.masterPod ?
           opts.instanceName:
           // non masterPod instances include branch in their name
           opts.instanceName.replace(opts.branch+'-', '');
-        expect(naviEntry.directKey)
-          .to.equal([
-            'frontend:',
-            opts.exposedPort, '.',
-            opts.shortHash, '-',
+        if (!opts.isolated) {
+          repoName = opts.shortHash + '-' + repoName;
+        }
+        theUrl = theUrl || [
             repoName, '-',
             'staging', '-',
             opts.ownerUsername, '.',
             opts.userContentDomain
+          ].join('').toLowerCase();
+
+        expect(naviEntry.directKey)
+          .to.equal([
+            'frontend:',
+            opts.exposedPort, '.',
+            theUrl
           ].join('').toLowerCase());
         expect(naviEntry.opts.exposedPort).to.equal(opts.exposedPort);
         expect(naviEntry.opts.instanceName).to.equal(opts.instanceName);
@@ -219,13 +321,19 @@ describe('NaviEntry', function () {
         expect(naviEntry.opts.ownerUsername).to.equal(opts.ownerUsername);
         expect(naviEntry.opts.userContentDomain).to.equal(opts.userContentDomain);
       }
-      function expectElasticKey (naviEntry, opts) {
+      function expectElasticKey (naviEntry, opts, theUrl) {
+        var repoName = opts.isolated ?
+         opts.instanceName.replace(regexForRemovingShortHashFromDirectUrls, ''): opts.instanceName;
+        theUrl = theUrl || [
+            repoName, '-staging-',
+            opts.ownerUsername, '.',
+            opts.userContentDomain
+          ].join('').toLowerCase();
         expect(naviEntry.elasticKey)
           .to.equal([
             'frontend:',
             opts.exposedPort, '.',
-            opts.instanceName, '-staging-', opts.ownerUsername, '.',
-            opts.userContentDomain
+            theUrl
           ].join('').toLowerCase());
         expect(naviEntry.opts.exposedPort).to.equal(opts.exposedPort);
         expect(naviEntry.opts.instanceName).to.equal(opts.instanceName);
@@ -250,6 +358,64 @@ describe('NaviEntry', function () {
         .to.equal('frontend:542.hash-repo-staging-codenow.runnableapp.com');
       expect(NaviEntry.createFromUrl('http://repo-staging-codenow.runnableapp.com:542').key)
         .to.equal('frontend:542.repo-staging-codenow.runnableapp.com');
+      done();
+    });
+  });
+
+  describe('formatOpts', function () {
+    var opts = {
+      exposedPort: '80',
+      shortHash: 'abcdef',
+      branch: 'branch',
+      ownerUsername: 'ownerUsername',
+      ownerGithub: 101,
+      userContentDomain: 'runnableapp.com',
+      masterPod: true,
+      instanceName: 'instanceName'
+    };
+    describe('Verifying errors', function () {
+      Object.keys(opts).forEach(function (optKey) {
+        it('should throw error when missing the required opt ' + optKey, function (done) {
+          expect(function () {
+            delete opts[optKey];
+            NaviEntry.formatOpts(opts);
+          }).to.throw(Error);
+          done();
+        });
+      });
+    });
+
+    it('should pull out the exposed port', function (done) {
+      opts.exposedPort = '3000/sdfsfadfadsf';
+      NaviEntry.formatOpts(opts);
+      expect(opts.exposedPort).to.equal('3000');
+      done();
+    });
+
+    it('should save isolatedParentShorthash since it\'s an isolated container', function (done) {
+      opts.isolated = 'asdfasdfasdfgasdfh';
+      opts.instanceName = '1123f1--instanceName';
+      opts.masterPod = false;
+      NaviEntry.formatOpts(opts);
+      expect(opts.isolatedParentShortHash).to.equal('1123f1');
+      done();
+    });
+
+    // This would be a freshly added non-repo container added to an isolation
+    it('should not save isolatedParentShorthash, since this is a masterpod', function (done) {
+      opts.isolated = 'asdfasdfasdfgasdfh';
+      opts.instanceName = '1123f1--instanceName';
+      NaviEntry.formatOpts(opts);
+      expect(opts.isolatedParentShortHash).to.be.undefined();
+      done();
+    });
+
+    it('should not save isolatedParentShorthash, since this is the group master', function (done) {
+      opts.isolated = 'asdfasdfasdfgasdfh';
+      opts.instanceName = '1123f1--instanceName';
+      opts.isIsolationGroupMaster = true;
+      NaviEntry.formatOpts(opts);
+      expect(opts.isolatedParentShortHash).to.be.undefined();
       done();
     });
   });

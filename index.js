@@ -15,16 +15,6 @@ var requireOpt = function (opts, key) {
     throw new Error(message);
   }
 };
-var formatOpts = function (opts) {
-  requireOpt(opts, 'exposedPort');
-  requireOpt(opts, 'shortHash');
-  requireOpt(opts, 'instanceName');
-  requireOpt(opts, 'ownerUsername');
-  requireOpt(opts, 'userContentDomain');
-  requireOpt(opts, 'masterPod');
-  requireOpt(opts, 'ownerGithub');
-  opts.exposedPort = opts.exposedPort.split('/')[0];
-};
 
 module.exports = NaviEntry;
 
@@ -55,7 +45,7 @@ function NaviEntry (optsOrKey) {
 
   if (opts) {
     this.opts = opts;
-    formatOpts(opts);
+    NaviEntry.formatOpts(opts);
 
     // the new user domain is active. use the new domain scheme
     this._createKeys(opts);
@@ -70,6 +60,42 @@ function NaviEntry (optsOrKey) {
 }
 
 require('util').inherits(NaviEntry, RedisList);
+
+var regexForRemovingShortHashFromDirectUrls = /^([A-z0-9]*)-{1,2}.*/;
+
+/**
+ * Verifies the opts given to this NaviEntry contain the required options it needs.  It also
+ * parses the exposedPort, and grabs the isolated parent short hash from the name and saves it if
+ * this entry is for an isolated container
+ * @param {Object}  opts                        - options
+ * @param {String}  opts.exposedPort            - string from container ports object
+ * @param {String}  opts.shortHash              - shorthash of the instance
+ * @param {Object}  opts.instanceName           - instance name (isolated contain master shorthash)
+ * @param {Object}  opts.ownerUsername          - instance's owner username
+ * @param {Object}  opts.userContentDomain      - (runnableapp.com/runnable.ninja)
+ * @param {Boolean} opts.masterPod              - true if this instance is a masterpod
+ * @param {Object}  opts.ownerGithub            - github id of the owner
+ * @param {Object}  opts.isolated               - (Optional) if this instance is isolated, this is
+ *                                                   the id of the group master
+ * @param {Boolean} opts.isIsolationGroupMaster - (Optional) true if this is the group master
+ * @throws {Error} when a required opt is missing
+ */
+NaviEntry.formatOpts = function (opts) {
+  requireOpt(opts, 'exposedPort');
+  requireOpt(opts, 'shortHash');
+  requireOpt(opts, 'instanceName');
+  requireOpt(opts, 'ownerUsername');
+  requireOpt(opts, 'userContentDomain');
+  requireOpt(opts, 'masterPod');
+  requireOpt(opts, 'ownerGithub');
+  opts.exposedPort = opts.exposedPort.split('/')[0];
+  if (opts.isolated && !opts.masterPod && !opts.isIsolationGroupMaster) {
+    var regexResult = regexForRemovingShortHashFromDirectUrls.exec(opts.instanceName);
+    if (regexResult) {
+      opts.isolatedParentShortHash = regexResult[1];
+    }
+  }
+};
 
 /**
  * create a NaviEntry instance from a hostname (no protocol or port)
@@ -113,13 +139,12 @@ NaviEntry.createFromUrl = function (uri) {
  * @param  {Object}    this.opts   options is required
  */
 NaviEntry.prototype._createKeys = function () {
-  if (this.opts.branch) {
-    this._createDirectKey();
-    if (this.opts.masterPod) { // master w/ repo, ex: api master
-      this._createElasticKey();
-    }
-  } else { // Non repo container
+  if (this.opts.masterPod) {
     this._createElasticKey();
+  }
+  // only master non-repo containers don't get direct
+  if (!this.opts.masterPod || this.opts.branch) {
+    this._createDirectKey();
   }
 };
 
@@ -272,6 +297,10 @@ NaviEntry.prototype.getDirectHostname = function (shortHash) {
  */
 NaviEntry.prototype._validateShortHash = function (shortHash) {
   shortHash = shortHash || this.opts.shortHash;
+  if (this.opts.isolatedParentShortHash) {
+    // add the extra - so it works with all of the replaces
+    shortHash = this.opts.isolatedParentShortHash + '-';
+  }
   if (!shortHash) {
     throw new Error('shortHash or opts.shortHash is required');
   }

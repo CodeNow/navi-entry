@@ -432,6 +432,27 @@ describe('NaviEntry instance methods', function () {
         done();
       });
     });
+    describe('isolated non-repo dependency', function () {
+      var opts = {
+        exposedPort:  '80',
+        shortHash:    'e3fsd3',
+        instanceName: 'abcdef--instanceName',
+        ownerUsername: 'ownerUsername',
+        ownerGithub: 101,
+        userContentDomain: 'runnableapp.com',
+        masterPod: false,
+        isolated: 'asda34'
+      };
+      beforeEach(function(done) {
+        ctx.naviEntry = new NaviEntry(opts);
+        done();
+      });
+      it('should remove the shortHash from the hostname', function (done) {
+        var hostname = ctx.naviEntry.getDirectHostname(opts.shortHash);
+        expect(hostname).to.equal('abcdef--instancename-staging-ownerusername.runnableapp.com');
+        done();
+      });
+    });
   });
   describe('getElasticHostname', function () {
     describe('masterPod: true', function () {
@@ -464,6 +485,27 @@ describe('NaviEntry instance methods', function () {
         ownerGithub: 101,
         userContentDomain: 'runnableapp.com',
         masterPod: true
+      };
+      beforeEach(function(done) {
+        ctx.naviEntry = new NaviEntry(opts);
+        done();
+      });
+      it('should remove the shortHash from the hostname', function (done) {
+        var hostname = ctx.naviEntry.getElasticHostname(opts.shortHash);
+        expect(hostname).to.equal('instancename-staging-ownerusername.runnableapp.com');
+        done();
+      });
+    });
+    describe('isolated non-repo container', function () {
+      var opts = {
+        exposedPort:  '80',
+        shortHash:    'abcdef',
+        instanceName: 'sd23d0--instanceName',
+        ownerUsername: 'ownerUsername',
+        ownerGithub: 101,
+        userContentDomain: 'runnableapp.com',
+        masterPod: true,
+        isolated: '123123'
       };
       beforeEach(function(done) {
         ctx.naviEntry = new NaviEntry(opts);
