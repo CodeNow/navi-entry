@@ -125,7 +125,7 @@ NaviEntry.prototype._createKeys = function () {
   if (this.opts.masterPod) {
     this._createElasticKey();
   }
-  if (!(this.opts.masterPod && !this.opts.branch)) { // master w/o branches (Non-repo containers)
+  if (!this.opts.masterPod || this.opts.branch) { // only master non-repo containers don't get direct
     this._createDirectKey();
   }
 };
