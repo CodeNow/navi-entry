@@ -1,5 +1,5 @@
 {
-  "name": "navi-entry",
+  "name": "@runnable/navi-entry",
   "version": "4.0.2",
   "description": "A redis list class for a navi entry",
   "main": "index.js",
